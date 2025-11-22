@@ -1,3 +1,88 @@
+# Third attempt: use simple token replacement to avoid brace issues.
+from PIL import Image, ImageDraw, ImageFont
+import os, json, zipfile
+
+out_dir = '/mnt/data/labirinto_output'
+os.makedirs(out_dir, exist_ok=True)
+
+# Use previous map generation (recreate quickly)
+W, H = 800, 800
+tile = 40
+cols = W // tile
+rows = H // tile
+# generate same map_grid with simpler method for reliability
+map_grid = [[0]*cols for _ in range(rows)]
+for x in range(cols):
+    map_grid[0][x] = 1
+    map_grid[rows-1][x] = 1
+for y in range(rows):
+    map_grid[y][0] = 1
+    map_grid[y][cols-1] = 1
+for sx in range(3, cols-3, 6):
+    for y in range(2, rows-2):
+        if (y % 5) != 0:
+            map_grid[y][sx] = 1
+for sy in range(3, rows-3, 4):
+    for x in range(2, cols-2):
+        if (x % 5) != 0:
+            map_grid[sy][x] = 1
+# carve simple path
+entrance = (1, rows//2)
+exit_pos = (cols-2, rows//2)
+x,y = entrance
+path = []
+for i in range(200):
+    path.append((x,y))
+    if x < exit_pos[0] and (i % 7 != 0):
+        x += 1
+    else:
+        if (i % 4) < 2:
+            y = max(1, y-1)
+        else:
+            y = min(rows-2, y+1)
+for px,py in path:
+    for dx in (-1,0,1):
+        for dy in (-1,0,1):
+            nx,ny = px+dx, py+dy
+            if 0<=nx<cols and 0<=ny<rows:
+                map_grid[ny][nx] = 0
+
+# create image
+from PIL import Image, ImageDraw, ImageFont
+img = Image.new('RGB', (W,H), 'white')
+draw = ImageDraw.Draw(img)
+wall_color = (10,10,10)
+for y in range(rows):
+    for x in range(cols):
+        if map_grid[y][x] == 1:
+            draw.rectangle([x*tile, y*tile, (x+1)*tile, (y+1)*tile], fill=wall_color)
+# overlay path
+overlay = Image.new('RGBA', img.size, (0,0,0,0))
+od = ImageDraw.Draw(overlay)
+coords = [(px*tile + tile//2, py*tile + tile//2) for px,py in path]
+if coords:
+    od.line(coords, fill=(25,135,255,200), width=8, joint="curve")
+# arrows
+def arrow_at(pt, direction='left'):
+    x,y = pt
+    if direction=='left':
+        od.polygon([(x-18,y),(x+6,y-12),(x+6,y+12)], fill=(30,144,255))
+    else:
+        od.polygon([(x+18,y),(x-6,y-12),(x-6,y+12)], fill=(30,144,255))
+arrow_at((entrance[0]*tile + tile//2, entrance[1]*tile + tile//2),'right')
+arrow_at((exit_pos[0]*tile + tile//2, exit_pos[1]*tile + tile//2),'left')
+img = Image.alpha_composite(img.convert('RGBA'), overlay)
+try:
+    font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 20)
+except:
+    font = ImageFont.load_default()
+draw = ImageDraw.Draw(img)
+draw.text((10,10), "Design do Labirinto — percurso solução em azul", fill=(0,60,120), font=font)
+maze_img_path = os.path.join(out_dir, 'maze_design.png')
+img.convert('RGB').save(maze_img_path, 'PNG')
+
+# HTML template with tokens
+html_template = """
 <!doctype html>
 <html lang="pt-BR">
 <head>
@@ -5,306 +90,120 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Labirinto Didático — Boneca e Canário</title>
 <style>
-  :root{--tile:48px;--cols:20;--rows:12}
-  body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,#071028,#071a33);color:#eaf6ff}
-  .container{display:flex;gap:18px;padding:18px;align-items:flex-start;justify-content:center}
-  .panel{background:rgba(255,255,255,0.03);padding:14px;border-radius:12px;width:1040px}
-  header{display:flex;justify-content:space-between;align-items:center}
-  h1{margin:0;font-size:20px}
-  .controls{display:flex;gap:8px;align-items:center}
-  button{background:#0f1724;border:1px solid rgba(255,255,255,0.03);color:#e6f3ff;padding:8px 12px;border-radius:8px;cursor:pointer}
-  button.primary{background:linear-gradient(90deg,#3b82f6,#06b6d4);color:#fff;border:none}
-  .game-area{display:flex;gap:12px;margin-top:12px}
-  canvas{background:#f3fbff;border-radius:10px;box-shadow:0 10px 30px rgba(2,6,23,0.4)}
-  .sidebar{width:300px}
-  .card{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));padding:10px;border-radius:10px;margin-bottom:8px}
-  .legend{font-size:13px;color:#bfe8ff}
-  .kbd{display:inline-block;padding:6px 8px;border-radius:6px;background:#072A3A;color:#bfe8ff;margin-left:6px}
-  .tiny{font-size:13px;color:#cfeeff}
-  .tutorial{font-size:14px;color:#dff1ff}
-  .footer{font-size:12px;color:#93c2dd;margin-top:6px}
+  body{margin:0;background:#071028;color:#eaf6ff;font-family:Inter,Arial,sans-serif;display:flex;align-items:flex-start;justify-content:center;padding:20px;}
+  .panel{width:980px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));padding:14px;border-radius:10px;}
+  canvas{background:#f8fbff;border-radius:8px;display:block;}
+  header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+  button{padding:8px 12px;border-radius:8px;border:none;cursor:pointer;background:#0f1724;color:#e6f3ff}
+  button.primary{background:linear-gradient(90deg,#3b82f6,#06b6d4);}
+  .hud{display:flex;gap:12px;align-items:center;margin-top:8px;}
+  .kbd{display:inline-block;padding:4px 8px;background:#072A3A;border-radius:6px;color:#bfe8ff;margin-left:6px}
 </style>
 </head>
 <body>
-<div class="container">
-  <div class="panel">
-    <header>
-      <h1>Labirinto Didático — Boneca (jogadora) & Canário (procura)</h1>
-      <div class="controls">
-        <label for="level">Nível</label>
-        <select id="level">
-          <option value="easy">Fácil</option>
-          <option value="medium">Médio</option>
-          <option value="hard">Difícil</option>
-        </select>
-        <button id="start" class="primary">Iniciar</button>
-        <button id="reset">Reiniciar</button>
-      </div>
-    </header>
-
-    <div class="game-area">
-      <canvas id="game" width="960" height="576"></canvas>
-
-      <div class="sidebar">
-        <div class="card">
-          <div class="tutorial"><strong>Objetivo (didático)</strong></div>
-          <div class="tiny">A boneca (você) caminha por módulos da casa — cômodos representados por zonas do mapa — para encontrar o canário que usa uma pulseirinha colorida. O jogo mostra dicas visuais e uma barra de sinal para aprender a usar rastreadores e atenção ao ambiente.</div>
-        </div>
-
-        <div class="card">
-          <div class="legend"><strong>Controles</strong></div>
-          <div class="tiny">Mover: <span class="kbd">← ↑ → ↓</span> ou <span class="kbd">W A S D</span></div>
-          <div class="tiny">Interagir: <span class="kbd">E</span></div>
-          <div class="tiny">Reiniciar: botão <em>Reiniciar</em></div>
-        </div>
-
-        <div class="card">
-          <div class="legend"><strong>Legenda das colunas</strong></div>
-          <div class="tiny">🟡 Amarelo - caminho claro (passável)</div>
-          <div class="tiny">🔴 Vermelho - bloqueio (não passa)</div>
-          <div class="tiny">🟢 Verde - porta automática</div>
-          <div class="tiny">🔵 Azul - checkpoint (mostra pista da pulseira)</div>
-        </div>
-
-        <div class="card">
-          <div class="legend"><strong>Pulseira / Feedback</strong></div>
-          <div id="face" style="font-size:24px;">🙂</div>
-          <div id="signal" class="tiny">Sinal: —</div>
-        </div>
-
-        <div class="card">
-          <div class="legend"><strong>Dicas didáticas</strong></div>
-          <ul class="tiny">
-            <li>Observe cores: elas ajudam a navegar e identificar perigos.</li>
-            <li>Portas verdes abrem automaticamente quando você estiver perto.</li>
-            <li>Checkpoint azul dá dicas textuais sobre a posição do canário.</li>
-          </ul>
-        </div>
-
-        <div class="footer">Protótipo educativo — adapte fases e tornou mais acessível: sem flashes no menu <br>Se quiser publicar no GitHub Pages, diga "publique" que eu preparo os arquivos.</div>
-      </div>
-    </div>
+<div class="panel">
+<header>
+  <h2>Labirinto Didático — Boneca & Canário</h2>
+  <div>
+    <select id="level">
+      <option value="easy">Fácil</option>
+      <option value="medium">Médio</option>
+      <option value="hard">Difícil</option>
+    </select>
+    <button id="start" class="primary">Iniciar</button>
+    <button id="reset">Reiniciar</button>
   </div>
+</header>
+
+<canvas id="game" width="%%W%%" height="%%H%%"></canvas>
+<div class="hud">
+  <div>Pulseira: <span id="face">🙂</span></div>
+  <div id="signal">Sinal: —</div>
+  <div style="margin-left:auto">Controles: <span class="kbd">W A S D</span> / <span class="kbd">Setas</span></div>
+</div>
 </div>
 
 <script>
-const TILE = 48;
-const COLS = 20; const ROWS = 12; // grid
+const TILE = %%TILE%%;
+const COLS = %%COLS%%;
+const ROWS = %%ROWS%%;
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
-let levelKey = 'easy';
 
-// map codes
-// 0 floor, 1 wall, 2 yellow col, 3 red col, 4 green col (door), 5 blue checkpoint, 6 furniture, 7 toy, 8 locked, 9 key
-
-// simple modular house templates (array of rows)
-const templates = {
-  easy: {
-    map: generateEmptyMap(),
-    player:{x:1,y:1},
-    bird:{x:16,y:9}
-  },
-  medium:{ map: generateEmptyMap(), player:{x:1,y:1}, bird:{x:17,y:8} },
-  hard:{ map: generateEmptyMap(), player:{x:1,y:1}, bird:{x:14,y:6} }
-};
-
-// fill templates with sample modules (rooms) and colored columns
-function generateEmptyMap(){
-  const m=[]; for(let y=0;y<ROWS;y++){ const r=[]; for(let x=0;x<COLS;x++){ r.push(0);} m.push(r);} return m;
-}
-
-function setupTemplate(map){
-  // create outer walls
-  for(let x=0;x<COLS;x++){ map[0][x]=1; map[ROWS-1][x]=1; }
-  for(let y=0;y<ROWS;y++){ map[y][0]=1; map[y][COLS-1]=1; }
-  // create modular rooms by drawing vertical/horizontal separators
-  for(let rx=1; rx<COLS-1; rx+=6){ for(let y=2; y<ROWS-2; y++){ map[y][rx]=3; /*red column as wall divider*/ } }
-  for(let ry=1; ry<ROWS-1; ry+=4){ for(let x=2; x<COLS-2; x++){ map[ry][x]=2; /*yellow col as floor divider*/ } }
-  // add green doors at some separators
-  map[3][6]=4; map[7][12]=4; map[5][18]=4;
-  // add blue checkpoints
-  map[2][2]=5; map[6][9]=5; map[9][15]=5;
-  // add furniture (6) and toys (7)
-  map[4][4]=6; map[5][5]=7; map[8][3]=6; map[8][4]=7; map[10][10]=6;
-}
-
-// initialize templates
-setupTemplate(templates.easy.map);
-setupTemplate(templates.medium.map);
-setupTemplate(templates.hard.map);
+let map = %%JS_MAP%%;
 
 let state = {
-  map: [], player:{x:1,y:1,px:0,py:0,w:32,h:40,speed:160}, bird:{x:16,y:9,dir:1},
-  time:0, face:'🙂', found:false, keys:0
+  player: {x:%%ENTR_X%%, y:%%ENTR_Y%%, w:28, h:28, px:%%ENTR_X%%*TILE + (TILE-28)/2, py:%%ENTR_Y%%*TILE + (TILE-28)/2, speed:120},
+  bird: {x:%%EXIT_X%%, y:%%EXIT_Y%%},
+  found:false,
+  level:'easy',
+  time:0
 };
 
-function loadLevel(key){
-  levelKey = key;
-  state.map = templates[key].map.map(r=>r.slice());
-  state.player.x = templates[key].player.x; state.player.y = templates[key].player.y;
-  state.player.px = state.player.x * TILE + (TILE-state.player.w)/2; state.player.py = state.player.y * TILE + (TILE-state.player.h)/2;
-  state.bird.x = templates[key].bird.x; state.bird.y = templates[key].bird.y; state.found=false; state.time=0; state.face='🙂'; updateHUD();
+function getTile(x,y){ if(x<0||y<0||x>=COLS||y>=ROWS) return 1; return map[y][x]; }
+function draw(){ ctx.clearRect(0,0,canvas.width,canvas.height);
+  for(let y=0;y<ROWS;y++){ for(let x=0;x<COLS;x++){ const px = x*TILE, py = y*TILE; ctx.fillStyle = '#f8fbff'; ctx.fillRect(px,py,TILE-1,TILE-1); if(map[y][x]===1){ ctx.fillStyle = '#0b0b0b'; ctx.fillRect(px,py,TILE-1,TILE-1); } } }
+  const bx = state.bird.x*TILE + TILE/2; const by = state.bird.y*TILE + TILE/2;
+  ctx.fillStyle='#ffd24d'; ctx.beginPath(); ctx.arc(bx,by-6,12,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#ff9fb3'; ctx.fillRect(bx-6,by+6,12,8);
+  ctx.fillStyle='#ffd24d'; ctx.fillRect(bx-6,by+14,4,3); ctx.fillStyle='#ef4444'; ctx.fillRect(bx-0,by+14,4,3); ctx.fillStyle='#34d399'; ctx.fillRect(bx+6,by+14,4,3);
+  ctx.fillStyle='#ffd7b5'; ctx.beginPath(); ctx.arc(state.player.px + state.player.w/2, state.player.py - 6, 12,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#7c3aed'; ctx.beginPath(); ctx.moveTo(state.player.px+4, state.player.py+8); ctx.quadraticCurveTo(state.player.px+state.player.w/2, state.player.py+state.player.h+6, state.player.px+state.player.w-4, state.player.py+8); ctx.fill();
+  for(let y=0;y<ROWS;y++){ for(let x=0;x<COLS;x++){ if(map[y][x]===1){ ctx.strokeStyle='rgba(0,0,0,0.2)'; ctx.strokeRect(x*TILE,y*TILE,TILE-1,TILE-1); } } }
+  if(state.found){ ctx.fillStyle='rgba(10,150,10,0.12)'; ctx.fillRect(0,0,canvas.width,canvas.height); }
 }
 
-function getTile(x,y){ if(x<0||y<0||x>=COLS||y>=ROWS) return 1; return state.map[y][x]; }
-function setTile(x,y,v){ if(x>=0&&y>=0&&x<COLS&&y<ROWS) state.map[y][x]=v; }
-function isBlocking(t){ return t===1||t===3||t===6||t===8; }
+let keys = {}; window.addEventListener('keydown', e=> keys[e.key.toLowerCase()] = true); window.addEventListener('keyup', e=> keys[e.key.toLowerCase()] = false);
 
-// input
-const keys={}; window.addEventListener('keydown',e=>keys[e.key.toLowerCase()]=true);
-window.addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
-
-// UI hooks
-document.getElementById('start').addEventListener('click',()=>loadLevel(document.getElementById('level').value));
-document.getElementById('reset').addEventListener('click',()=>loadLevel(levelKey));
-
-// game loop
-let last = performance.now(); function loop(now){ const dt = Math.min(0.05,(now-last)/1000); last=now; update(dt); render(); requestAnimationFrame(loop); }
-requestAnimationFrame(loop);
-
-function update(dt){ if(state.found) return; state.time+=dt;
-  // bird gentle AI: walks horizontally within a small module
-  if(state.time%0.6 < 0.3) state.bird.x += state.bird.dir*0.02; else state.bird.x -= state.bird.dir*0.01;
-  // player movement
-  let dx=0,dy=0; if(keys['arrowleft']||keys['a']) dx=-1; if(keys['arrowright']||keys['d']) dx=1; if(keys['arrowup']||keys['w']) dy=-1; if(keys['arrowdown']||keys['s']) dy=1;
+function update(dt){ if(state.found) return; state.time += dt;
+  let dx=0, dy=0; if(keys['arrowleft']||keys['a']) dx=-1; if(keys['arrowright']||keys['d']) dx=1; if(keys['arrowup']||keys['w']) dy=-1; if(keys['arrowdown']||keys['s']) dy=1;
   if(dx!==0 && dy!==0){ dx*=0.7071; dy*=0.7071; }
   let sp = state.player.speed;
-  const footX = Math.floor((state.player.px+state.player.w/2)/TILE); const footY = Math.floor((state.player.py+state.player.h/2)/TILE);
-  if(getTile(footX,footY)===7) sp *= 0.5; // toy slows
-  const newPx = state.player.px + dx*sp*dt; const newPy = state.player.py + dy*sp*dt;
-  // simple collision: check bounding box corners
-  function coll(px,py){ const corners = [[px,py],[px+state.player.w-1,py],[px,py+state.player.h-1],[px+state.player.w-1,py+state.player.h-1]];
-    for(const c of corners){ const gx=Math.floor(c[0]/TILE), gy=Math.floor(c[1]/TILE); if(isBlocking(getTile(gx,gy))) return true; } return false; }
-  // axis separate
-  if(!coll(newPx,state.player.py)) state.player.px = newPx; if(!coll(state.player.px,newPy)) state.player.py = newPy;
-  state.player.x = Math.floor((state.player.px+state.player.w/2)/TILE); state.player.y = Math.floor((state.player.py+state.player.h/2)/TILE);
-  // auto open green doors nearby
-  for(let yy=0; yy<ROWS; yy++){ for(let xx=0; xx<COLS; xx++){ if(getTile(xx,yy)===4){ const dd = Math.hypot(xx-state.player.x, yy-state.player.y); if(dd<1.5) setTile(xx,yy,0); } } }
-  // collect keys (if any)
-  if(getTile(state.player.x,state.player.y)===9){ state.keys++; setTile(state.player.x,state.player.y,0);} 
-  // check found bird (we compare grid positions)
-  const bx = Math.round(state.bird.x), by = Math.round(state.bird.y);
-  if(bx===state.player.x && by===state.player.y){ state.found=true; state.face='🙂'; setTimeout(()=>alert('Parabéns — a boneca encontrou o canário!'),120); }
-  updateTracker(bx,by);
+  const newPx = state.player.px + dx*sp*dt;
+  const newPy = state.player.py + dy*sp*dt;
+  function coll(px,py){ const corners = [[px,py],[px+state.player.w-1,py],[px,py+state.player.h-1],[px+state.player.w-1,py+state.player.h-1]]; for(const c of corners){ const gx = Math.floor(c[0]/TILE), gy = Math.floor(c[1]/TILE); if(getTile(gx,gy)===1) return true; } return false; }
+  if(!coll(newPx, state.player.py)) state.player.px = newPx;
+  if(!coll(state.player.px, newPy)) state.player.py = newPy;
+  state.player.x = Math.floor((state.player.px + state.player.w/2)/TILE);
+  state.player.y = Math.floor((state.player.py + state.player.h/2)/TILE);
+  if(state.player.x === state.bird.x && state.player.y === state.bird.y){ state.found = true; document.getElementById('face').textContent = '🙂'; setTimeout(()=> alert('A AURA agradece a ajuda — você encontrou a filha!'), 80); }
+  updateTracker();
 }
 
-function updateTracker(bx,by){ const dx = bx - state.player.x; const dy = by - state.player.y; const dist = Math.hypot(dx,dy);
-  if(dist<=2) state.face='🙂'; else if(dist<=6) state.face='😟'; else state.face='😢';
-  document.getElementById('face').textContent = state.face;
+function updateTracker(){ const dx = state.bird.x - state.player.x; const dy = state.bird.y - state.player.y; const dist = Math.hypot(dx,dy);
+  const face = dist<=2 ? '🙂' : (dist<=6 ? '😟' : '😢'); document.getElementById('face').textContent = face;
   const sig = document.getElementById('signal');
-  if(levelKey==='easy'){
-    // direction arrow
-    let dir=''; if(dy<0) dir+=' ↑'; if(dy>0) dir+=' ↓'; if(dx<0) dir+=' ←'; if(dx>0) dir+=' →'; if(dir==='') dir=' Aqui'; sig.textContent = 'Sinal:'+dir;
-  } else if(levelKey==='medium'){
-    sig.textContent = dist<=3? 'Sinal: Muito perto': (dist<=8? 'Sinal: Próximo':'Sinal: Longe');
-  } else {
-    const strength = Math.max(0,Math.min(5,Math.floor(10-dist))); sig.textContent = 'Sinal: '+ '▮'.repeat(strength)+'▯'.repeat(5-strength);
-  }
+  if(state.level === 'easy'){ let dir=''; if(dy<0) dir+=' ↑'; if(dy>0) dir+=' ↓'; if(dx<0) dir+=' ←'; if(dx>0) dir+=' →'; if(dir==='') dir=' Aqui'; sig.textContent = 'Sinal:'+dir; }
+  else if(state.level === 'medium'){ sig.textContent = dist<=3? 'Sinal: Muito perto' : (dist<=8? 'Sinal: Próximo' : 'Sinal: Longe'); }
+  else { const strength = Math.max(0, Math.min(5, Math.floor(10-dist))); sig.textContent = 'Sinal: '+ '▮'.repeat(strength) + '▯'.repeat(5-strength); }
 }
 
-function render(){ // clear
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  // draw floor (light tiles) and colored columns (4 colors representing autism)
-  for(let y=0;y<ROWS;y++){
-    for(let x=0;x<COLS;x++){
-      const px = x*TILE, py = y*TILE; ctx.fillStyle = '#f8fbff'; ctx.fillRect(px,py,TILE-2,TILE-2);
-      const t = getTile(x,y);
-      if(t===1){ ctx.fillStyle='#2b3b4b'; ctx.fillRect(px,py,TILE-2,TILE-2); }
-      else if(t===2){ ctx.fillStyle='#ffd24d'; ctx.fillRect(px+TILE*0.25,py+TILE*0.25,TILE*0.5,TILE*0.5); }
-      else if(t===3){ ctx.fillStyle='#ef4444'; ctx.fillRect(px+TILE*0.15,py+TILE*0.15,TILE*0.7,TILE*0.7); }
-      else if(t===4){ ctx.fillStyle='#34d399'; ctx.fillRect(px+TILE*0.2,py+TILE*0.2,TILE*0.6,TILE*0.6); }
-      else if(t===5){ ctx.fillStyle='#60a5fa'; ctx.beginPath(); ctx.arc(px+TILE/2,py+TILE/2,TILE*0.18,0,Math.PI*2); ctx.fill(); }
-      else if(t===6){ ctx.fillStyle='#7b5e57'; ctx.fillRect(px+6,py+8,TILE-12,TILE-18); }
-      else if(t===7){ ctx.fillStyle='#ffb4c1'; ctx.fillRect(px+TILE*0.28,py+TILE*0.28,TILE*0.44,TILE*0.44); }
-      else if(t===8){ ctx.fillStyle='#6b7280'; ctx.fillRect(px+TILE*0.2,py+TILE*0.2,TILE*0.6,TILE*0.6); }
-      else if(t===9){ ctx.fillStyle='#fbbf24'; ctx.fillRect(px+TILE*0.35,py+TILE*0.42,TILE*0.3,TILE*0.12); }
-      ctx.strokeStyle='rgba(12,34,56,0.03)'; ctx.strokeRect(px,py,TILE-2,TILE-2);
-    }
-  }
-  // draw bird (canário) — small yellow with little wing; bird.x can be fractional
-  const birdX = state.bird.x * TILE + TILE/2; const birdY = state.bird.y * TILE + TILE/2;
-  ctx.beginPath(); ctx.fillStyle='#ffd24d'; ctx.arc(birdX, birdY-6, 10,0,Math.PI*2); ctx.fill();
-  ctx.fillStyle='#ffb84d'; ctx.beginPath(); ctx.ellipse(birdX, birdY+6, 10,6,0,0,Math.PI*2); ctx.fill();
-  // small eye
-  ctx.fillStyle='#222'; ctx.fillRect(birdX+4, birdY-8, 3,3);
-  // pulseira on bird's leg (3 small colored dots)
-  ctx.fillStyle='#ffd24d'; ctx.fillRect(birdX-6, birdY+12,4,3); ctx.fillStyle='#ef4444'; ctx.fillRect(birdX-1, birdY+12,4,3); ctx.fillStyle='#34d399'; ctx.fillRect(birdX+4, birdY+12,4,3);
+let last = performance.now();
+function loop(now){ const dt = Math.min(0.05, (now-last)/1000); last = now; update(dt); draw(); requestAnimationFrame(loop); }
+requestAnimationFrame(loop);
 
-  // draw player (boneca) — head and dress
-  ctx.fillStyle='#ffd7b5'; ctx.beginPath(); ctx.arc(state.player.px+state.player.w/2, state.player.py-6, 12,0,Math.PI*2); ctx.fill();
-  // dress
-  ctx.fillStyle='#7c3aed'; ctx.beginPath(); ctx.moveTo(state.player.px+4, state.player.py+8); ctx.quadraticCurveTo(state.player.px+state.player.w/2, state.player.py+state.player.h+6, state.player.px+state.player.w-4, state.player.py+8); ctx.fill();
-  // small eyes
-  ctx.fillStyle='#222'; ctx.fillRect(state.player.px+8, state.player.py-10,3,3); ctx.fillRect(state.player.px+state.player.w-12, state.player.py-10,3,3);
+document.getElementById('start').addEventListener('click', ()=> { state.level = document.getElementById('level').value; if(state.level==='easy') state.player.speed = 140; else if(state.level==='medium') state.player.speed = 120; else state.player.speed = 100; state.found = false; state.player.px = %%ENTR_X%%*TILE + (TILE-state.player.w)/2; state.player.py = %%ENTR_Y%%*TILE + (TILE-state.player.h)/2; });
 
-  // draw directional hint on easy
-  if(levelKey==='easy'){
-    const dx = Math.sign(Math.round(state.bird.x)-state.player.x); const dy = Math.sign(Math.round(state.bird.y)-state.player.y);
-    ctx.save(); ctx.strokeStyle='#ff6b6b'; ctx.lineWidth=3; ctx.beginPath(); const sx=state.player.px+state.player.w/2, sy=state.player.py+state.player.h/2; ctx.moveTo(sx,sy); ctx.lineTo(sx+dx*40, sy+dy*40); ctx.stroke(); ctx.restore();
-  }
-  // vignette for hard mode
-  if(levelKey==='hard'){
-    ctx.fillStyle='rgba(3,6,15,0.18)'; ctx.fillRect(0,0,canvas.width,canvas.height);
-  }
-}
-
-// helper to set some locked doors and keys in hard
-function placeLockedAndKeys(){ if(levelKey!=='hard') return; setTile(8,4,8); setTile(13,7,9); }
-
-function updateHUD(){ document.getElementById('face').textContent = state.face; }
-
-// start default
-loadLevel('easy');
-
-document.getElementById('level').addEventListener('change',e=>{
-  loadLevel(e.target.value);
-});
-
-// small initial load
-function loadLevel(k){ templates[k].map = templates[k].map.map(r=>r.slice()); // copy
-  setupTemplate(templates[k].map); // ensure modules
-  levelKey=k; state.map = templates[k].map.map(r=>r.slice());
-  state.player.x = templates[k].player.x; state.player.y = templates[k].player.y; state.player.px = state.player.x*TILE + (TILE-state.player.w)/2; state.player.py = state.player.y*TILE + (TILE-state.player.h)/2;
-  state.bird.x = templates[k].bird.x; state.bird.y = templates[k].bird.y; state.found=false; state.time=0; state.face='🙂'; placeLockedAndKeys(); updateHUD(); }
-
-// reuse setupTemplate function from above context (recreate modular walls/columns)
-function setupTemplate(map){
-  // clear and let the template already contain outer walls
-  for(let x=0;x<COLS;x++){ map[0][x]=1; map[ROWS-1][x]=1; }
-  for(let y=0;y<ROWS;y++){ map[y][0]=1; map[y][COLS-1]=1; }
-  // vertical separators every 6 tiles (red columns)
-  for(let sx=6; sx<COLS-1; sx+=6){ for(let y=2;y<ROWS-2;y++){ map[y][sx]=3; } }
-  // horizontal separators every 4 tiles (yellow)
-  for(let sy=4; sy<ROWS-1; sy+=4){ for(let x=2;x<COLS-2;x++){ map[sy][x]=2; } }
-  // green doors in some separators
-  map[3][6]=4; map[7][12]=4; map[5][18]=4;
-  // blue checkpoints
-  map[2][2]=5; map[6][9]=5; map[9][15]=5;
-  // furniture and toys
-  map[4][4]=6; map[5][5]=7; map[8][3]=6; map[8][4]=7; map[10][10]=6;
-}
-
-// basic collision and movement controls
-function canMoveTo(nx,ny){ if(nx<1||ny<1||nx>=COLS-1||ny>=ROWS-1) return false; const t=getTile(nx,ny); if(isBlocking(t)) return false; return true; }
-
-window.addEventListener('keydown', e=>{
-  if(e.key.toLowerCase()==='e'){
-    // interact: if on key or locked door, open
-    const t=getTile(state.player.x,state.player.y); if(t===9){ state.keys++; setTile(state.player.x,state.player.y,0);} }
-  let nx=state.player.x, ny=state.player.y;
-  if(e.key==='ArrowUp' || e.key.toLowerCase()==='w') ny--;
-  if(e.key==='ArrowDown' || e.key.toLowerCase()==='s') ny++;
-  if(e.key==='ArrowLeft' || e.key.toLowerCase()==='a') nx--;
-  if(e.key==='ArrowRight' || e.key.toLowerCase()==='d') nx++;
-  if(canMoveTo(nx,ny)){
-    state.player.x=nx; state.player.y=ny; state.player.px = state.player.x*TILE + (TILE-state.player.w)/2; state.player.py = state.player.y*TILE + (TILE-state.player.h)/2;
-  }
-  // check win
-  if(Math.round(state.bird.x)===state.player.x && Math.round(state.bird.y)===state.player.y){ state.found=true; setTimeout(()=>alert('A boneca encontrou o canário!'),80); }
-});
+document.getElementById('reset').addEventListener('click', ()=> { state.found = false; state.player.px = %%ENTR_X%%*TILE + (TILE-state.player.w)/2; state.player.py = %%ENTR_Y%%*TILE + (TILE-state.player.h)/2; });
 
 </script>
 </body>
 </html>
+"""
+
+html_filled = html_template.replace("%%W%%", str(W)).replace("%%H%%", str(H)).replace("%%TILE%%", str(tile)).replace("%%COLS%%", str(cols)).replace("%%ROWS%%", str(rows)).replace("%%JS_MAP%%", json.dumps(map_grid)).replace("%%ENTR_X%%", str(entrance[0])).replace("%%ENTR_Y%%", str(entrance[1])).replace("%%EXIT_X%%", str(exit_pos[0])).replace("%%EXIT_Y%%", str(exit_pos[1]))
+
+html_path = os.path.join(out_dir, 'index.html')
+with open(html_path, 'w', encoding='utf-8') as f:
+    f.write(html_filled)
+
+zip_path = os.path.join(out_dir, 'labirinto_package.zip')
+with zipfile.ZipFile(zip_path, 'w') as z:
+    z.write(maze_img_path, arcname='maze_design.png')
+    z.write(html_path, arcname='index.html')
+
+maze_img_path, html_path, zip_path
+
+
 
 
