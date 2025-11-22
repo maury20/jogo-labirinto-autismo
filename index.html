@@ -3,107 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AURA: O Labirinto do Encontro - Nível Difícil</title>
+    <title>AURA: O Labirinto do Encontro - Emojis Personagens</title>
 
     <style>
         /* ------------------------------------- */
         /* CÓDIGO CSS (Estilo e Design do Labirinto) */
         /* ------------------------------------- */
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            background-color: #f0f8ff; /* Fundo suave */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; flex-direction: column; align-items: center; background-color: #f0f8ff; color: #333; padding: 10px; }
+        h1 { color: #d0021b; margin-bottom: 5px; font-size: 1.6em; }
+        #game-info { display: flex; gap: 40px; margin-bottom: 15px; font-size: 1.1em; padding: 10px 20px; border: 2px solid #ccc; border-radius: 8px; background-color: #fff; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+        #focus-meter { color: #d0021b; font-weight: bold; }
+        #aura-signal { font-weight: bold; }
+        #maze-container { display: grid; grid-template-columns: repeat(18, 30px); grid-template-rows: repeat(18, 30px); border: 4px solid #1a1a1a; box-shadow: 0 0 20px rgba(0, 0, 0, 0.3); background-color: #e6e6e6; }
+        .tile { width: 30px; height: 30px; box-sizing: border-box; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 1.2em; transition: background-color 0.1s; }
+
+        /* Paredes Coloridas */
+        .wall-blue { background-color: #4a90e2; border: 1px solid #357ae8; }
+        .wall-yellow { background-color: #f8e71c; border: 1px solid #e1d30f; }
+        .wall-red { background-color: #d0021b; border: 1px solid #a80017; }
+        .wall-green { background-color: #7ed321; border: 1px solid #5fb50d; }
+        
+        /* PORTA, MÓVEIS e OBSTÁCULOS */
+        .door { background-color: #b8860b; border: 1px solid #8b6508; } 
+        .sofa { background-color: #8B4513; border: 1px solid #69340f; } 
+        .bed { background-color: #b0c4de; border: 1px solid #9fb3cc; } 
+        .table { background-color: #a0522d; border: 1px solid #733a1e; } 
+
+        /* NOVOS EMOJIS DE FOCO/RECUPERAÇÃO */
+        .retreat { background-color: #8B0000; color: white; } /* R: Rosto Zangado */
+        .calm { background-color: #2e8b57; color: white; } /* G: Meditação */
+
+        /* NOME DO CÔMODO (N) */
+        .room-name {
+            background-color: transparent; 
             color: #333;
-            padding: 20px;
+            font-size: 0.6em; 
+            font-style: italic;
+            opacity: 0.7;
+            text-align: center;
+            line-height: 100%;
+            pointer-events: none;
         }
 
-        h1 {
-            color: #d0021b; /* Vermelho para o Nível Difícil */
-            margin-bottom: 10px;
-        }
-
-        #game-info {
-            display: flex;
-            gap: 40px;
-            margin-bottom: 20px;
-            font-size: 1.1em;
-            padding: 10px 20px;
-            border: 2px solid #ccc;
-            border-radius: 8px;
-            background-color: #fff;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        #focus-meter {
-            color: #d0021b; /* Vermelho para alerta/estresse */
-            font-weight: bold;
-        }
-        
-        #aura-signal {
-            font-weight: bold;
-        }
-
-        /* Ajuste do Grid para 15x15 */
-        #maze-container {
-            display: grid;
-            grid-template-columns: repeat(15, 35px); /* Reduzido para caber 15 colunas */
-            grid-template-rows: repeat(15, 35px);
-            border: 4px solid #1a1a1a;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
-            background-color: #fff;
-        }
-
-        .tile {
-            width: 35px;
-            height: 35px;
-            box-sizing: border-box;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-weight: bold;
-            font-size: 0.8em;
-            transition: background-color 0.1s;
-        }
-
-        /* Cores das Paredes (Novas classes para cada cor) */
-        .wall-blue {
-            background-color: #4a90e2; /* Azul */
-            border: 1px solid #357ae8;
-        }
-        .wall-yellow {
-            background-color: #f8e71c; /* Amarelo */
-            border: 1px solid #e1d30f;
-        }
-        .wall-red {
-            background-color: #d0021b; /* Vermelho */
-            border: 1px solid #a80017;
-        }
-        .wall-green {
-            background-color: #7ed321; /* Verde */
-            border: 1px solid #5fb50d;
-        }
-        
-        /* Recuo Emocional (R) */
-        .retreat {
-            background-color: #8B0000; /* Vermelho Escuro - para diferenciar de parede vermelha */
-            color: white;
-            font-size: 1.2em;
-            text-shadow: 1px 1px 1px #000;
-        }
-
-        /* Ponto de Calma (G) */
-        .calm {
-            background-color: #2e8b57; /* Verde Marinho - para diferenciar de parede verde */
-            color: white;
-        }
-
-        /* Fim (Aura) */
+        /* Fim (Menina) */
         .end {
             background-color: #f8e71c; 
             color: #9013fe;
-            font-size: 1.2em;
             animation: pulse 1s infinite alternate; 
         }
 
@@ -113,64 +58,75 @@
             border: 3px solid #1a1a1a;
             border-radius: 50%;
             z-index: 10;
-            line-height: 35px; 
-            font-size: 1.2em;
+            line-height: 30px; 
         }
-        
-        @keyframes pulse {
-            from { box-shadow: 0 0 5px #f8e71c; }
-            to { box-shadow: 0 0 15px orange, 0 0 20px #d0021b; }
-        }
-
-        .instructions {
-            margin-top: 15px;
-            font-style: italic;
-            color: #666;
-        }
+        @keyframes pulse { from { box-shadow: 0 0 5px #f8e71c; } to { box-shadow: 0 0 15px orange, 0 0 20px #d0021b; } }
     </style>
 </head>
 <body>
-    <h1>AURA: O Labirinto do Encontro (NÍVEL DIFÍCIL - Cores Variadas)</h1>
+    <h1>AURA: O Labirinto do Encontro (Mãe 🧍‍♀️ busca a Menina 👧)</h1>
     
     <div id="game-info">
         <div id="focus-meter">Foco: <span id="f-value">100</span>%</div>
-        <div id="aura-signal">Sinal do Colar: <span>🟢 Calma</span></div>
+        <div id="aura-signal">Sinal da Menina: <span>🟢 Distante</span></div>
     </div>
 
     <div id="maze-container">
         </div>
     
-    <p class="instructions">Use as setas (↑ ↓ ← →) para mover Mariana pelos cômodos da casa. Todas as paredes coloridas bloqueiam. Cuidado com o Recuo Emocional (R)!</p>
+    <p class="instructions">Use as setas. Cuidado: 🛋️, 🛌, 🍽️, 🚪 e a Raiva (😠) bloqueiam o caminho! Busque a Calma (🧘).</p>
 
     <script>
         /* ------------------------------------- */
         /* CÓDIGO JAVASCRIPT (Lógica do Jogo) */
         /* ------------------------------------- */
 
-        // --- 1. Definição do Mapa do Nível Difícil (15x15) ---
-        // M: Mãe, A: Aura, #: Parede Genérica (veremos a cor no JS), G: Ponto de Calma, R: Recuo Emocional
-        // NOTA: Para garantir um caminho possível, o mapa foi cuidadosamente desenhado.
-        // A cor da parede será atribuída no JS para simular as 4 cores.
-        const HARD_MAP = [
-            // C1 C2 C3 C4 C5 C6 C7 C8 C9 C10 C11 C12 C13 C14 C15
-            ['M', '#', '#', '#', '_', '_', '_', '_', '_', '#', '#', '#', '_', '_', '_'], // L1 (Hall)
-            ['_', '_', '_', '#', '_', '#', '#', '#', '_', '#', '_', '#', '_', '#', '_'], // L2
-            ['_', '#', '_', '#', '_', '#', '_', '#', '_', '#', '_', '#', '_', '#', '_'], // L3
-            ['_', '#', '_', '_', '_', '#', '_', '#', '_', '_', '_', '#', '_', '#', '_'], // L4 (Corredor Quartos)
-            ['_', '#', '#', '#', '#', '#', '_', '#', '#', '#', '#', '#', '_', '#', '_'], // L5
-            ['_', '_', '_', '_', '_', '_', '_', '#', '_', '_', '_', '_', '_', '#', '_'], // L6
-            ['#', '#', '#', '#', '#', '#', '_', '#', '_', '#', '#', '#', '#', '#', '_'], // L7 (Sala de Estar)
-            ['_', '_', '_', '_', '_', '_', '_', '#', '_', '#', '_', '_', '_', '_', '_'], // L8
-            ['_', '#', '#', '#', '#', '#', '#', '#', '_', '#', '_', '#', '#', '#', '#'], // L9
-            ['_', '#', 'R', '_', '_', '_', '_', '_', '_', '#', '_', '#', '_', '_', '_'], // L10 (Cozinha/Serviço - R)
-            ['_', '#', '#', '#', '#', '#', '#', '#', '#', '#', '_', '#', '_', '#', '_'], // L11
-            ['_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '#', '_', '#', '_'], // L12
-            ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '_', '#', '_', '#', '_'], // L13 (Banheiro)
-            ['_', '_', '_', '_', '_', '_', 'G', '_', '_', '#', '_', '_', '_', '#', '_'], // L14
-            ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', 'A']  // L15 (Quarto da Aura)
+        // --- EMOJIS DE MÓVEIS E PERSONAGENS ---
+        const EMOJI_SOFA = '🛋️';
+        const EMOJI_BED = '🛌';
+        const EMOJI_TABLE = '🍽️';
+        const EMOJI_DOOR = '🚪';
+        const EMOJI_PLAYER = '🧍‍♀️'; // Mãe de corpo todo
+        const EMOJI_AURA = '👧'; // Menina
+        const EMOJI_CALM = '🧘'; // Calma (G)
+        const EMOJI_RETREAT = '😠'; // Recuo (R)
+
+        // --- 1. Definição do Mapa EXTREMO (18x18) com Sala de Estar ---
+        // M: Mãe, A: Aura, #: Parede, G: Calma, R: Recuo, S: Sofá, B: Cama, T: Mesa, D: Porta, N: Nome
+        const CURRENT_MAP = [
+            // C1 C2 C3 C4 C5 C6 C7 C8 C9 C10 C11 C12 C13 C14 C15 C16 C17 C18
+            ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'], // L1
+            ['#', '_', 'N', '_', '_', '_', '_', '_', '_', '#', '_', '_', '_', '_', '_', '_', '_', '#'], // L2 (N: SALA DE ESTAR)
+            ['#', '_', '_', '_', 'S', '_', '_', 'S', '_', '#', '_', '#', '#', '#', '#', '#', '#', '#'], // L3 (S: Sofá)
+            ['#', 'M', '#', '#', '#', '#', '#', '#', 'D', '#', '_', '#', '_', '_', '_', '_', '_', '#'], // L4 (M: Início, D: Porta Sala)
+            ['#', '_', '_', '_', '_', '_', '_', '_', '_', '#', '_', '#', '_', '#', '#', '#', '#', '#'], // L5 (Corredor Lateral)
+            ['#', '#', '#', 'D', '#', '#', '#', '#', '#', '#', '_', '#', '_', '#', 'N', '_', '_', '#'], // L6 (D: Porta Quarto 1 / N: COZINHA)
+            ['#', '_', '_', '_', '_', '#', 'B', '_', '_', '_', '_', '#', '_', '#', '_', '#', '_', '#'], // L7 (B: Cama Q1)
+            ['#', '_', '#', '#', '#', '#', '_', '#', '#', '#', '#', '#', 'T', '#', '_', '#', '_', 'D'], // L8 (T: Mesa Cozinha, D: Porta Q. Aura)
+            ['#', 'N', '#', '_', '_', '_', '_', '#', '_', '_', '_', '_', '_', '_', '_', '#', '_', '#'], // L9 (N: QUARTO 1)
+            ['#', '#', '#', '#', '#', '#', '#', '#', 'D', '#', 'G', '_', '_', '#', 'R', '_', '_', '#'], // L10 (D: Porta Banheiro / G: Calma / R: Recuo)
+            ['#', '_', '_', '_', '_', '_', '_', '_', '_', '#', '_', '#', '_', '#', '#', '#', '#', '#'], // L11 
+            ['#', 'N', '#', '#', '#', '#', '#', '#', '#', '#', '_', '#', '_', '#', 'B', '_', '_', '#'], // L12 (N: BANHEIRO, B: Cama Q2)
+            ['#', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '#', '_', '#', '#', '#', '#', '#'], // L13
+            ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '_', '_', '_', '_', '_', '#'], // L14
+            ['#', 'D', '_', 'N', '_', '_', '_', '_', '_', '_', '#', '#', '#', '#', '#', '#', '#', '#'], // L15 (D: Porta Q2, N: QUARTO 2)
+            ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '_', '_', '_', '_', '_', '_', 'A'], // L16 (A: Aura)
+            ['#', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '#'], // L17
+            ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#']  // L18
         ];
+
+        // Mapeamento dos nomes dos cômodos para as coordenadas 'N'
+        const ROOM_NAMES_SALA = {
+            '2,1': 'SALA DE ESTAR',
+            '14,5': 'COZINHA',
+            '1,8': 'QUARTO 1',
+            '1,11': 'BANHEIRO',
+            '3,14': 'QUARTO 2',
+            '14,16': 'QUARTO AURA'
+        };
         
-        const CURRENT_MAP = HARD_MAP;
+        // Posição da Aura (A)
+        let auraPos = { x: 17, y: 16 }; 
 
         let playerPos = { x: 0, y: 0 }; 
         let focusValue = 100;
@@ -180,51 +136,33 @@
         const mapHeight = CURRENT_MAP.length; 
         const mapWidth = CURRENT_MAP[0].length; 
         
-        let auraPos = { x: 14, y: 14 }; // Posição de 'A' (Aura) no HARD_MAP
-
-        // Cores das paredes para alternar
         const wallColors = ['wall-blue', 'wall-yellow', 'wall-red', 'wall-green'];
-        let currentColorIndex = 0; // Para alternar as cores das paredes
-
-        // --- 2. Funções de Atualização e Feedback ---
+        let currentColorIndex = 0; 
         
+        // --- FUNÇÕES DE ATUALIZAÇÃO E FEEDBACK (MANTIDAS) ---
         function updateFocus(change) {
             focusValue = Math.min(100, Math.max(0, focusValue + change));
             focusMeterDisplay.textContent = focusValue;
             
-            if (focusValue <= 20) {
-                 focusMeterDisplay.style.color = 'red';
-            } else {
-                 focusMeterDisplay.style.color = '#d0021b';
-            }
-
-            if (focusValue === 0) {
-                alert("O Foco se esgotou! A pressão foi demais. Tente respirar e buscar novamente.");
-                resetGame();
-            }
+            if (focusValue <= 20) { focusMeterDisplay.style.color = 'red'; } else { focusMeterDisplay.style.color = '#d0021b'; }
+            if (focusValue === 0) { alert("O Foco se esgotou! Reinicie a busca."); resetGame(); }
         }
         
         function updateAuraSignal() {
             const distance = Math.abs(playerPos.x - auraPos.x) + Math.abs(playerPos.y - auraPos.y);
             let signalText;
-
-            if (distance <= 5) { // Aura está muito próxima
-                signalText = '🔴 Perto! (Amarelo Dourado)';
-                auraSignalDisplay.style.color = '#f5a623';
-            } else if (distance <= 15) { // Distância média
-                signalText = '🟡 Médio (Azul Pulsante)';
-                auraSignalDisplay.style.color = '#4a90e2';
-            } else { // Aura distante
-                signalText = '🟢 Distante (Verde Calmo)';
-                auraSignalDisplay.style.color = '#7ed321';
-            }
+            if (distance <= 6) { signalText = '🔴 Perto! (Menina próxima)'; auraSignalDisplay.style.color = '#f5a623'; } 
+            else if (distance <= 20) { signalText = '🟡 Médio (Sinal forte)'; auraSignalDisplay.style.color = '#4a90e2'; } 
+            else { signalText = '🟢 Distante (Sinal fraco)'; auraSignalDisplay.style.color = '#7ed321'; }
             auraSignalDisplay.textContent = signalText;
         }
 
-        // --- 3. Função de Renderização e Posicionamento do Jogador ---
-
+        // --- 3. Função de Renderização e Posicionamento do Jogador (Emojis Aplicados aqui) ---
         function drawMaze(map) {
             mazeContainer.innerHTML = '';
+            mazeContainer.style.gridTemplateColumns = `repeat(${mapWidth}, 30px)`;
+            mazeContainer.style.gridTemplateRows = `repeat(${mapHeight}, 30px)`;
+            
             for (let y = 0; y < mapHeight; y++) {
                 for (let x = 0; x < mapWidth; x++) {
                     const tile = document.createElement('div');
@@ -234,25 +172,47 @@
 
                     switch (map[y][x]) {
                         case '#':
-                            // Atribui uma das 4 cores de parede
                             tile.classList.add(wallColors[currentColorIndex]);
-                            currentColorIndex = (currentColorIndex + 1) % wallColors.length; // Alterna a cor
+                            currentColorIndex = (currentColorIndex + 1) % wallColors.length; 
                             break;
+                        case 'S':
+                            tile.classList.add('sofa');
+                            tile.textContent = EMOJI_SOFA; 
+                            break;
+                        case 'B':
+                            tile.classList.add('bed');
+                            tile.textContent = EMOJI_BED; 
+                            break;
+                        case 'T':
+                            tile.classList.add('table');
+                            tile.textContent = EMOJI_TABLE; 
+                            break;
+                        case 'D':
+                            tile.classList.add('door');
+                            tile.textContent = EMOJI_DOOR; 
+                            break; 
+                        case 'N':
+                            tile.classList.add('room-name');
+                            const key = `${x},${y}`;
+                            if (ROOM_NAMES_SALA[key]) {
+                                tile.textContent = ROOM_NAMES_SALA[key];
+                            }
+                            break; 
                         case 'G':
                             tile.classList.add('calm');
-                            tile.textContent = 'G';
+                            tile.textContent = EMOJI_CALM; 
                             break;
                         case 'R':
                             tile.classList.add('retreat');
-                            tile.textContent = 'R';
+                            tile.textContent = EMOJI_RETREAT; 
                             break; 
                         case 'A':
                             tile.classList.add('end');
-                            tile.textContent = 'A';
+                            tile.textContent = EMOJI_AURA; 
                             auraPos = {x: x, y: y};
                             break;
                         case 'M':
-                            playerPos = { x: x, y: y };
+                            playerPos = { x: x, y: y }; 
                             tile.classList.add('start');
                             break;
                         case '_':
@@ -274,99 +234,85 @@
                 oldPlayerTile.textContent = ''; 
                 
                 const tileType = CURRENT_MAP[oldPlayerTile.dataset.y][oldPlayerTile.dataset.x];
-                if (tileType === 'G' || tileType === 'R') {
-                     oldPlayerTile.textContent = tileType;
-                }
+                
+                // Restaura o emoji/letra do tile
+                if (tileType === 'S') { oldPlayerTile.textContent = EMOJI_SOFA; }
+                else if (tileType === 'B') { oldPlayerTile.textContent = EMOJI_BED; }
+                else if (tileType === 'T') { oldPlayerTile.textContent = EMOJI_TABLE; }
+                else if (tileType === 'D') { oldPlayerTile.textContent = EMOJI_DOOR; }
+                else if (tileType === 'A') { oldPlayerTile.textContent = EMOJI_AURA; }
+                else if (tileType === 'G') { oldPlayerTile.textContent = EMOJI_CALM; } 
+                else if (tileType === 'R') { oldPlayerTile.textContent = EMOJI_RETREAT; } 
+                // Nomes (N) são restaurados pelo CSS/drawMaze
             }
             
             const newPlayerTile = document.querySelector(`[data-x="${playerPos.x}"][data-y="${playerPos.y}"]`);
             if (newPlayerTile) {
                 newPlayerTile.classList.add('player');
-                newPlayerTile.textContent = '👩'; // Representação da Mãe
+                newPlayerTile.textContent = EMOJI_PLAYER; 
             }
         }
 
-        // --- 4. Lógica de Movimento e Interações ---
+        // --- 4. Lógica de Movimento e Interações (MANTIDA) ---
         function movePlayer(dx, dy) {
             const newX = playerPos.x + dx;
             const newY = playerPos.y + dy;
             
-            // 1. Verificar Limites
-            if (newX < 0 || newX >= mapWidth || newY < 0 || newY >= mapHeight) {
-                return; 
-            }
+            if (newX < 0 || newX >= mapWidth || newY < 0 || newY >= mapHeight) { return; }
 
             const nextTile = CURRENT_MAP[newY][newX];
 
-            // Colisão com Recuo Emocional (R)
+            // 1. Bloqueios Fixos
+            if (nextTile === 'S' || nextTile === 'B' || nextTile === 'T' || nextTile === '#' || nextTile === 'D') {
+                updateFocus(-10); 
+                return; 
+            }
+
+            // 2. Colisão com Recuo Emocional (R)
             if (nextTile === 'R') {
-                updateFocus(-20); // Perda de Foco severa
-                console.log("Colisão! Recuo Emocional (R). Foco atual: " + focusValue);
-                
+                updateFocus(-20); 
                 const backX = playerPos.x - (dx * 3);
                 const backY = playerPos.y - (dy * 3);
-                
                 playerPos.x = Math.min(mapWidth - 1, Math.max(0, backX));
                 playerPos.y = Math.min(mapHeight - 1, Math.max(0, backY));
-                
                 placePlayer(); 
                 return; 
             }
 
-            // Colisão com QUALQUER PAREDE (#)
-            if (nextTile === '#') {
-                updateFocus(-10); // Perda de Foco padrão ao bater em qualquer parede
-                return; 
-            }
-            
-            // Ponto de Calma (G)
-            if (nextTile === 'G') {
-                updateFocus(5); // Pequeno ganho de Foco
-            }
+            // 3. Ponto de Calma (G)
+            if (nextTile === 'G') { updateFocus(5); }
             
             // 4. Atualizar Posição
             playerPos.x = newX;
             playerPos.y = newY;
             placePlayer();
-            updateFocus(-1); // Perda de Foco a cada movimento
+            updateFocus(-1); 
             updateAuraSignal();
 
             // 5. Verificação de Condição de Vitória (A = Aura)
-            if (nextTile === 'A') {
-                gameOver(true);
-            } 
+            if (nextTile === 'A') { gameOver(true); } 
         }
         
         function gameOver(victory) {
             if (victory) {
-                alert("Vitória no Nível Difícil! AURA agradece a ajuda. O Encontro é o início da Compreensão.");
+                alert("Vitória no Nível EXTREMO! Você encontrou a Menina (Aura).");
             }
-            
             setTimeout(resetGame, 100);
         }
         
         function resetGame() {
              focusValue = 100;
              updateFocus(0);
-             drawMaze(CURRENT_MAP); // Redesenha o mapa
+             drawMaze(CURRENT_MAP); 
         }
-
 
         // --- 5. Event Listener para Teclas (Movimentação) ---
         document.addEventListener('keydown', (e) => {
             switch (e.key) {
-                case 'ArrowUp':
-                    movePlayer(0, -1);
-                    break;
-                case 'ArrowDown':
-                    movePlayer(0, 1);
-                    break;
-                case 'ArrowLeft':
-                    movePlayer(-1, 0);
-                    break;
-                case 'ArrowRight':
-                    movePlayer(1, 0);
-                    break;
+                case 'ArrowUp': movePlayer(0, -1); break;
+                case 'ArrowDown': movePlayer(0, 1); break;
+                case 'ArrowLeft': movePlayer(-1, 0); break;
+                case 'ArrowRight': movePlayer(1, 0); break;
             }
         });
 
@@ -375,3 +321,4 @@
     </script>
 </body>
 </html>
+```http://googleusercontent.com/image_generation_content/0
