@@ -3,20 +3,333 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> Labirinto AURA</title>
-    <link rel="stylesheet" href="style.css">
+    <title>AURA: O Labirinto do Encontro</title>
+
+    <style>
+        /* ------------------------------------- */
+        /* CÓDIGO CSS (style.css) */
+        /* ------------------------------------- */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #e6f7ff; /* Fundo suave */
+            color: #333;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #4a90e2; /* Azul, cor de conscientização */
+            margin-bottom: 10px;
+        }
+
+        #game-info {
+            display: flex;
+            gap: 40px;
+            margin-bottom: 20px;
+            font-size: 1.1em;
+            padding: 10px 20px;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            background-color: #fff;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Medidor de Foco (Implementação Básica) */
+        #focus-meter {
+            color: #d0021b; /* Vermelho para alerta/estresse */
+        }
+        
+        /* Sinal do Colar (Implementação Básica) */
+        #aura-signal {
+            font-weight: bold;
+            color: #f5a623; /* Amarelo/Laranja para o brilho */
+        }
+
+        #maze-container {
+            display: grid;
+            /* 10 colunas e 10 linhas */
+            grid-template-columns: repeat(10, 45px);
+            grid-template-rows: repeat(10, 45px);
+            border: 4px solid #1a1a1a;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+            background-color: #fff;
+        }
+
+        .tile {
+            width: 45px;
+            height: 45px;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            transition: background-color 0.2s; /* Transição suave */
+        }
+
+        /* Cores das Paredes (Azul, conforme pedido) */
+        .wall {
+            background-color: #4a90e2; /* Azul vibrante */
+            border: 1px solid #357ae8;
+        }
+
+        /* Caminhos (Chão da Casa) */
+        .path {
+            background-color: #f7f7f7; 
+        }
+
+        /* Ponto de Calma (Verde, Bônus Foco) */
+        .calm {
+            background-color: #7ed321; /* Verde */
+            color: white;
+            text-shadow: 1px 1px 2px #333;
+        }
+
+        /* Fim (Aura) */
+        .end {
+            background-color: #f8e71c; /* Amarelo: perto/alegria */
+            color: #9013fe; /* Roxo para destacar a criança */
+            font-size: 1.8em;
+            animation: pulse 1s infinite alternate; 
+        }
+
+        /* Estilo do Personagem (Mãe) */
+        .player {
+            background-color: #ff69b4; /* Rosa Choque para a Mãe */
+            border: 3px solid #d0021b;
+            border-radius: 50%;
+            z-index: 10;
+            line-height: 45px; /* Centralizar emoji */
+            font-size: 1.5em;
+        }
+        
+        /* Animação do Colar */
+        @keyframes pulse {
+            from { box-shadow: 0 0 5px #f8e71c; }
+            to { box-shadow: 0 0 15px orange, 0 0 20px red; }
+        }
+
+        /* Mensagem de Instrução */
+        .instructions {
+            margin-top: 15px;
+            font-style: italic;
+            color: #666;
+        }
+    </style>
 </head>
 <body>
     <h1>AURA: O Labirinto do Encontro</h1>
     
     <div id="game-info">
-        <div id="focus-meter">Foco: <span id="f-value">100%</span></div>
-        <div id="aura-signal">Sinal do Colar: 🟢 Calma</div>
+        <div id="focus-meter">Foco: <span id="f-value">100</span>%</div>
+        <div id="aura-signal">Sinal do Colar: <span>🟢 Calma</span></div>
     </div>
 
     <div id="maze-container">
         </div>
+    
+    <p class="instructions">Use as setas (↑ ↓ ← →) para mover a Mãe (👩). Evite as paredes azuis!</p>
 
-    <script src="game.js"></script>
+    <script>
+        /* ------------------------------------- */
+        /* CÓDIGO JAVASCRIPT (game.js) */
+        /* ------------------------------------- */
+
+        // --- 1. Definição do Mapa do Nível Fácil (10x10) ---
+        // M: Mãe (Início), A: Aura (Fim), #: Parede (Azul), G: Ponto de Calma (Verde), _: Caminho
+        const EASY_MAP = [
+            ['M', '_', '_', '#', '#', '_', '_', '_', '_', '_'],
+            ['#', '#', '_', '#', '_', '_', 'G', '_', '#', '_'],
+            ['_', '_', '_', '#', '#', '#', '#', '#', '#', '_'],
+            ['_', '#', '_', '_', '_', '_', '_', '_', '#', '_'],
+            ['_', '#', '#', '#', '#', '#', '#', '_', '#', '_'],
+            ['_', '_', '_', '_', '_', '_', '#', '_', '#', '_'],
+            ['#', '#', '#', '#', '#', '_', '#', '_', '_', '_'],
+            ['_', 'G', '#', '_', '_', '_', '_', '#', '#', '#'],
+            ['_', '_', '_', '_', '#', '#', '_', '_', 'A', '_'],
+            ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#']
+        ];
+
+        let playerPos = { x: 0, y: 0 }; 
+        let focusValue = 100; // Valor inicial do F-Meter
+        const mazeContainer = document.getElementById('maze-container');
+        const focusMeterDisplay = document.getElementById('f-value');
+        const auraSignalDisplay = document.querySelector('#aura-signal span');
+        const mapHeight = EASY_MAP.length;
+        const mapWidth = EASY_MAP[0].length;
+        
+        let auraPos = { x: 8, y: 8 }; // Posição fixa de 'A' (Aura)
+        
+        // --- 2. Funções de Atualização e Feedback ---
+        
+        function updateFocus(change) {
+            focusValue = Math.min(100, Math.max(0, focusValue + change));
+            focusMeterDisplay.textContent = focusValue;
+            
+            if (focusValue === 0) {
+                // Foco esgotado (Pânico)
+                alert("O Foco se esgotou! Respire e tente recomeçar.");
+                resetGame();
+            }
+        }
+        
+        function updateAuraSignal() {
+            // Distância de Manhattan (melhor para grid)
+            const distance = Math.abs(playerPos.x - auraPos.x) + Math.abs(playerPos.y - auraPos.y);
+            let signalText;
+
+            if (distance <= 3) {
+                signalText = '🔴 Perto! (Amarelo Dourado)';
+                auraSignalDisplay.style.color = '#f5a623';
+            } else if (distance <= 7) {
+                signalText = '🟡 Médio (Azul Pulsante)';
+                auraSignalDisplay.style.color = '#4a90e2';
+            } else {
+                signalText = '🟢 Distante (Verde Calmo)';
+                auraSignalDisplay.style.color = '#7ed321';
+            }
+            auraSignalDisplay.textContent = signalText;
+        }
+
+        // --- 3. Função de Renderização e Posicionamento do Jogador ---
+
+        function drawMaze(map) {
+            mazeContainer.innerHTML = '';
+            for (let y = 0; y < mapHeight; y++) {
+                for (let x = 0; x < mapWidth; x++) {
+                    const tile = document.createElement('div');
+                    tile.classList.add('tile');
+                    tile.dataset.x = x;
+                    tile.dataset.y = y;
+
+                    switch (map[y][x]) {
+                        case '#':
+                            tile.classList.add('wall');
+                            break;
+                        case 'G':
+                            tile.classList.add('calm');
+                            tile.textContent = 'G';
+                            break;
+                        case 'A':
+                            tile.classList.add('end');
+                            tile.textContent = 'A';
+                            auraPos = {x: x, y: y}; // Confirma a posição da Aura
+                            break;
+                        case 'M':
+                            playerPos = { x: x, y: y }; // Define a posição inicial
+                            tile.classList.add('start');
+                            break;
+                        case '_':
+                        default:
+                            tile.classList.add('path');
+                            break;
+                    }
+                    mazeContainer.appendChild(tile);
+                }
+            }
+            placePlayer();
+            updateAuraSignal();
+        }
+
+        function placePlayer() {
+            // Remove a classe 'player' da posição antiga
+            const oldPlayerTile = document.querySelector('.player');
+            if (oldPlayerTile) {
+                oldPlayerTile.classList.remove('player');
+                oldPlayerTile.textContent = ''; 
+                // Restaura o conteúdo original se necessário (ex: 'G')
+                if (EASY_MAP[oldPlayerTile.dataset.y][oldPlayerTile.dataset.x] === 'G') {
+                     oldPlayerTile.textContent = 'G';
+                }
+            }
+            
+            // Posiciona o jogador no novo tile
+            const newPlayerTile = document.querySelector(`[data-x="${playerPos.x}"][data-y="${playerPos.y}"]`);
+            if (newPlayerTile) {
+                newPlayerTile.classList.add('player');
+                newPlayerTile.textContent = '👩'; // Representação da Mãe
+            }
+        }
+
+        // --- 4. Lógica de Movimento e Interações ---
+        function movePlayer(dx, dy) {
+            const newX = playerPos.x + dx;
+            const newY = playerPos.y + dy;
+            let moved = false;
+            
+            // 1. Verificar Limites
+            if (newX < 0 || newX >= mapWidth || newY < 0 || newY >= mapHeight) {
+                return; 
+            }
+
+            const nextTile = EASY_MAP[newY][newX];
+
+            // 2. Detecção de Colisão (# = Parede Azul)
+            if (nextTile === '#') {
+                updateFocus(-10); // Grande perda de Foco ao colidir
+                console.log("Colisão! Foco -10. Foco atual: " + focusValue);
+                // **FEEDBACK VISUAL/SONORO:** Adicionar som de "colisão" aqui.
+                return; 
+            }
+            
+            // 3. Checagem de Interações antes de mover
+            if (nextTile === 'G') {
+                 // Ponto de Calma (Verde) - Bônus no Foco
+                updateFocus(5); // Pequeno ganho de Foco
+                console.log("Ponto de Calma (G)! Foco +5. Foco atual: " + focusValue);
+            }
+            
+            // 4. Atualizar Posição
+            playerPos.x = newX;
+            playerPos.y = newY;
+            placePlayer();
+            updateFocus(-1); // Pequena perda de Foco a cada movimento (estresse da busca)
+            updateAuraSignal();
+            moved = true;
+
+            // 5. Verificação de Condição de Vitória (A = Aura)
+            if (nextTile === 'A') {
+                gameOver(true);
+            } 
+        }
+        
+        function gameOver(victory) {
+            if (victory) {
+                alert("Parabéns, Mariana! AURA agradece a ajuda. O Encontro é o início da Compreensão.");
+            }
+            
+            setTimeout(resetGame, 100);
+        }
+        
+        function resetGame() {
+             focusValue = 100;
+             updateFocus(0);
+             // Redesenha o mapa para resetar a posição M
+             drawMaze(EASY_MAP);
+        }
+
+
+        // --- 5. Event Listener para Teclas (Movimentação) ---
+        document.addEventListener('keydown', (e) => {
+            switch (e.key) {
+                case 'ArrowUp':
+                    movePlayer(0, -1);
+                    break;
+                case 'ArrowDown':
+                    movePlayer(0, 1);
+                    break;
+                case 'ArrowLeft':
+                    movePlayer(-1, 0);
+                    break;
+                case 'ArrowRight':
+                    movePlayer(1, 0);
+                    break;
+            }
+        });
+
+        // Inicia o jogo
+        drawMaze(EASY_MAP);
+    </script>
 </body>
 </html>
