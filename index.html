@@ -67,27 +67,39 @@
             transition: background-color 0.1s;
         }
 
-        /* Paredes (Azul) - Muros de Comunicação */
-        .wall {
-            background-color: #4a90e2; 
+        /* Cores das Paredes (Novas classes para cada cor) */
+        .wall-blue {
+            background-color: #4a90e2; /* Azul */
             border: 1px solid #357ae8;
         }
+        .wall-yellow {
+            background-color: #f8e71c; /* Amarelo */
+            border: 1px solid #e1d30f;
+        }
+        .wall-red {
+            background-color: #d0021b; /* Vermelho */
+            border: 1px solid #a80017;
+        }
+        .wall-green {
+            background-color: #7ed321; /* Verde */
+            border: 1px solid #5fb50d;
+        }
         
-        /* Recuo Emocional (Vermelho) - Obstáculo R */
+        /* Recuo Emocional (R) */
         .retreat {
-            background-color: #d0021b; /* Vermelho forte */
+            background-color: #8B0000; /* Vermelho Escuro - para diferenciar de parede vermelha */
             color: white;
             font-size: 1.2em;
             text-shadow: 1px 1px 1px #000;
         }
 
-        /* Ponto de Calma (Verde) - Obstáculo G */
+        /* Ponto de Calma (G) */
         .calm {
-            background-color: #7ed321; 
+            background-color: #2e8b57; /* Verde Marinho - para diferenciar de parede verde */
             color: white;
         }
 
-        /* Fim (Aura) - Amarelo/Roxo */
+        /* Fim (Aura) */
         .end {
             background-color: #f8e71c; 
             color: #9013fe;
@@ -118,7 +130,7 @@
     </style>
 </head>
 <body>
-    <h1>AURA: O Labirinto do Encontro (NÍVEL DIFÍCIL)</h1>
+    <h1>AURA: O Labirinto do Encontro (NÍVEL DIFÍCIL - Cores Variadas)</h1>
     
     <div id="game-info">
         <div id="focus-meter">Foco: <span id="f-value">100</span>%</div>
@@ -128,7 +140,7 @@
     <div id="maze-container">
         </div>
     
-    <p class="instructions">Use as setas (↑ ↓ ← →) para mover Mariana pelos cômodos da casa. Cuidado com o Recuo Emocional (R)!</p>
+    <p class="instructions">Use as setas (↑ ↓ ← →) para mover Mariana pelos cômodos da casa. Todas as paredes coloridas bloqueiam. Cuidado com o Recuo Emocional (R)!</p>
 
     <script>
         /* ------------------------------------- */
@@ -136,41 +148,28 @@
         /* ------------------------------------- */
 
         // --- 1. Definição do Mapa do Nível Difícil (15x15) ---
-        // M: Mãe, A: Aura, #: Parede (Azul), G: Ponto de Calma (Verde), R: Recuo Emocional (Vermelho)
+        // M: Mãe, A: Aura, #: Parede Genérica (veremos a cor no JS), G: Ponto de Calma, R: Recuo Emocional
+        // NOTA: Para garantir um caminho possível, o mapa foi cuidadosamente desenhado.
+        // A cor da parede será atribuída no JS para simular as 4 cores.
         const HARD_MAP = [
-            // L1: M = HALL/ENTRADA (Início)
-            ['M', '#', '#', '#', '#', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_'], 
-            // L2: Corredor da Entrada
-            ['_', '_', '_', '_', '_', '_', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
-            // L3: Início dos Quartos
-            ['_', '#', '#', '#', '#', '#', '_', '_', '_', '_', '_', '_', '_', '_', '_'],
-            // L4: Quartos
-            ['_', '_', '_', '_', '_', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
-            // L5: Quartos (área complexa)
-            ['#', '#', '#', '#', '#', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_'],
-            // L6: Corredor Principal
-            ['#', '_', '_', '_', '_', '_', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
-            // L7: Sala de Estar (Início da área de stress)
-            ['#', '_', '#', '#', '#', '#', '#', '_', '_', '_', '_', '_', '_', '_', '_'],
-            // L8: Sala de Estar (Caminho tortuoso)
-            ['_', '_', '_', '#', '#', '_', '_', '#', '#', '#', '#', '#', '#', '#', '#'],
-            // L9: Sala de Estar/Canto do Sofá
-            ['_', '#', '_', '#', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_'],
-            // L10: Área de Serviço/Cozinha (Perto do Recuo Emocional)
-            ['_', '#', 'R', '#', '#', '#', '#', '#', '#', '_', '#', '#', '#', '#', '#'],
-            // L11: Cozinha/Lavanderia (Ponto de Calma)
-            ['_', '#', '_', '_', '_', '_', '_', '_', '_', '_', '#', 'G', '_', '_', '_'],
-            // L12: Corredor para Banheiro
-            ['_', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
-            // L13: Banheiro/Área Molhada (Transição)
-            ['_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_'],
-            // L14: Último Corredor para o Quarto da Aura
-            ['#', '#', '#', '#', '#', '#', '_', '#', '#', '#', '#', '#', '#', '#', '_'],
-            // L15: QUARTO DA AURA (Objetivo Final)
-            ['_', '_', '_', '_', '_', '_', 'A', '_', '_', '_', '_', '_', '_', '_', '_']
+            // C1 C2 C3 C4 C5 C6 C7 C8 C9 C10 C11 C12 C13 C14 C15
+            ['M', '#', '#', '#', '_', '_', '_', '_', '_', '#', '#', '#', '_', '_', '_'], // L1 (Hall)
+            ['_', '_', '_', '#', '_', '#', '#', '#', '_', '#', '_', '#', '_', '#', '_'], // L2
+            ['_', '#', '_', '#', '_', '#', '_', '#', '_', '#', '_', '#', '_', '#', '_'], // L3
+            ['_', '#', '_', '_', '_', '#', '_', '#', '_', '_', '_', '#', '_', '#', '_'], // L4 (Corredor Quartos)
+            ['_', '#', '#', '#', '#', '#', '_', '#', '#', '#', '#', '#', '_', '#', '_'], // L5
+            ['_', '_', '_', '_', '_', '_', '_', '#', '_', '_', '_', '_', '_', '#', '_'], // L6
+            ['#', '#', '#', '#', '#', '#', '_', '#', '_', '#', '#', '#', '#', '#', '_'], // L7 (Sala de Estar)
+            ['_', '_', '_', '_', '_', '_', '_', '#', '_', '#', '_', '_', '_', '_', '_'], // L8
+            ['_', '#', '#', '#', '#', '#', '#', '#', '_', '#', '_', '#', '#', '#', '#'], // L9
+            ['_', '#', 'R', '_', '_', '_', '_', '_', '_', '#', '_', '#', '_', '_', '_'], // L10 (Cozinha/Serviço - R)
+            ['_', '#', '#', '#', '#', '#', '#', '#', '#', '#', '_', '#', '_', '#', '_'], // L11
+            ['_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '#', '_', '#', '_'], // L12
+            ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '_', '#', '_', '#', '_'], // L13 (Banheiro)
+            ['_', '_', '_', '_', '_', '_', 'G', '_', '_', '#', '_', '_', '_', '#', '_'], // L14
+            ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', 'A']  // L15 (Quarto da Aura)
         ];
         
-        // Define o mapa atual como o Difícil
         const CURRENT_MAP = HARD_MAP;
 
         let playerPos = { x: 0, y: 0 }; 
@@ -178,10 +177,14 @@
         const mazeContainer = document.getElementById('maze-container');
         const focusMeterDisplay = document.getElementById('f-value');
         const auraSignalDisplay = document.querySelector('#aura-signal span');
-        const mapHeight = CURRENT_MAP.length; // 15
-        const mapWidth = CURRENT_MAP[0].length; // 15
+        const mapHeight = CURRENT_MAP.length; 
+        const mapWidth = CURRENT_MAP[0].length; 
         
-        let auraPos = { x: 6, y: 14 }; // Posição de 'A' (Aura)
+        let auraPos = { x: 14, y: 14 }; // Posição de 'A' (Aura) no HARD_MAP
+
+        // Cores das paredes para alternar
+        const wallColors = ['wall-blue', 'wall-yellow', 'wall-red', 'wall-green'];
+        let currentColorIndex = 0; // Para alternar as cores das paredes
 
         // --- 2. Funções de Atualização e Feedback ---
         
@@ -189,7 +192,6 @@
             focusValue = Math.min(100, Math.max(0, focusValue + change));
             focusMeterDisplay.textContent = focusValue;
             
-            // Feedback de cor para o foco baixo
             if (focusValue <= 20) {
                  focusMeterDisplay.style.color = 'red';
             } else {
@@ -203,17 +205,16 @@
         }
         
         function updateAuraSignal() {
-            // Distância de Manhattan 
             const distance = Math.abs(playerPos.x - auraPos.x) + Math.abs(playerPos.y - auraPos.y);
             let signalText;
 
-            if (distance <= 5) {
+            if (distance <= 5) { // Aura está muito próxima
                 signalText = '🔴 Perto! (Amarelo Dourado)';
                 auraSignalDisplay.style.color = '#f5a623';
-            } else if (distance <= 12) {
+            } else if (distance <= 15) { // Distância média
                 signalText = '🟡 Médio (Azul Pulsante)';
                 auraSignalDisplay.style.color = '#4a90e2';
-            } else {
+            } else { // Aura distante
                 signalText = '🟢 Distante (Verde Calmo)';
                 auraSignalDisplay.style.color = '#7ed321';
             }
@@ -233,7 +234,9 @@
 
                     switch (map[y][x]) {
                         case '#':
-                            tile.classList.add('wall');
+                            // Atribui uma das 4 cores de parede
+                            tile.classList.add(wallColors[currentColorIndex]);
+                            currentColorIndex = (currentColorIndex + 1) % wallColors.length; // Alterna a cor
                             break;
                         case 'G':
                             tile.classList.add('calm');
@@ -270,7 +273,6 @@
                 oldPlayerTile.classList.remove('player');
                 oldPlayerTile.textContent = ''; 
                 
-                // Restaura o conteúdo visual do tile subjacente
                 const tileType = CURRENT_MAP[oldPlayerTile.dataset.y][oldPlayerTile.dataset.x];
                 if (tileType === 'G' || tileType === 'R') {
                      oldPlayerTile.textContent = tileType;
@@ -296,26 +298,24 @@
 
             const nextTile = CURRENT_MAP[newY][newX];
 
-            // Colisão com Recuo Emocional (R - Cor Vermelha)
+            // Colisão com Recuo Emocional (R)
             if (nextTile === 'R') {
                 updateFocus(-20); // Perda de Foco severa
                 console.log("Colisão! Recuo Emocional (R). Foco atual: " + focusValue);
                 
-                // Mecânica de Recuo (volta 3 passos na direção oposta)
                 const backX = playerPos.x - (dx * 3);
                 const backY = playerPos.y - (dy * 3);
                 
-                // Garante que o recuo não vá para fora dos limites
                 playerPos.x = Math.min(mapWidth - 1, Math.max(0, backX));
                 playerPos.y = Math.min(mapHeight - 1, Math.max(0, backY));
                 
-                placePlayer(); // Coloca o jogador na nova posição de recuo
+                placePlayer(); 
                 return; 
             }
 
-            // Colisão com Parede Azul (#)
+            // Colisão com QUALQUER PAREDE (#)
             if (nextTile === '#') {
-                updateFocus(-10); // Perda de Foco padrão
+                updateFocus(-10); // Perda de Foco padrão ao bater em qualquer parede
                 return; 
             }
             
