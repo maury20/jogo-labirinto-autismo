@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jogo do Labirinto - Mãe e Filha</title>
+  <style>
+    body {
+      margin: 0;
+      background: #111;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      color: white;
+      font-family: Arial, sans-serif;
+    }
+    canvas {
+      border: 4px solid white;
+      background: #222;
+    }
+    #ui {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+    }
+    button {
+      padding: 10px 20px;
+      margin-right: 10px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+<div id="ui">
+  <button onclick="setLevel('easy')">Fácil</button>
+  <button onclick="setLevel('medium')">Médio</button>
+  <button onclick="setLevel('hard')">Difícil</button>
+</div>
+
+<canvas id="gameCanvas" width="600" height="600"></canvas>
+
+<script>
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+const TILE = 40;
+
+// Cores do autismo
+const COLORS = ["yellow", "red", "green", "blue"]; 
+
+let level = "easy";
+
+// Personagens
+const mother = { x: 1, y: 1, color: "white" };
+const child = { x: 13, y: 13, color: "cyan" }; // Colar autismo será desenhado
+
+// Obstáculos por nível
+const obstacles = {
+  easy: [ [5,5], [6,5], [7,5] ],
+  medium: [ [4,4], [4,5], [4,6], [8,8], [8,9] ],
+  hard: [ [3,3], [3,4], [3,5], [7,2], [8,2], [9,2], [10,10], [11,10], [12,10] ]
+};
+
+function setLevel(l) {
+  level = l;
+  resetPositions();
+  draw();
+}
+
+function resetPositions() {
+  mother.x = 1;
+  mother.y = 1;
+  child.x = 13;
+  child.y = 13;
+}
+
+function drawHouseGrid() {
+  for (let y = 0; y < 15; y++) {
+    for (let x = 0; x < 15; x++) {
+      const color = COLORS[(x + y) % COLORS.length];
+      ctx.fillStyle = color;
+      ctx.fillRect(x * TILE, y * TILE, TILE, TILE);
+    }
+  }
+}
+
+function drawObstacles() {
+  ctx.fillStyle = "black";
+  for (const [ox, oy] of obstacles[level]) {
+    ctx.fillRect(ox * TILE, oy * TILE, TILE, TILE);
+  }
+}
+
+function drawCharacters() {
+  // Mãe
+  ctx.fillStyle = mother.color;
+  ctx.beginPath();
+  ctx.arc(mother.x * TILE + 20, mother.y * TILE + 20, 15, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Criança
+  ctx.fillStyle = child.color;
+  ctx.beginPath();
+  ctx.arc(child.x * TILE + 20, child.y * TILE + 20, 15, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Colar do autismo (quatro cores)
+  const necklaceColors = COLORS;
+  let angle = 0;
+  necklaceColors.forEach(c => {
+    ctx.strokeStyle = c;
+    ctx.beginPath();
+    ctx.arc(child.x * TILE + 20, child.y * TILE + 20, 20, angle, angle + 0.5);
+    ctx.stroke();
+    angle += 0.5;
+  });
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawHouseGrid();
+  drawObstacles();
+  drawCharacters();
+  checkWin();
+}
+
+function checkWin() {
+  if (mother.x === child.x && mother.y === child.y) {
+    setTimeout(() => alert("Você encontrou sua filha! 💙"), 100);
+  }
+}
+
+function canMove(nx, ny) {
+  if (nx < 0 || ny < 0 || nx > 14 || ny > 14) return false;
+  for (const [ox, oy] of obstacles[level]) {
+    if (ox === nx && oy === ny) return false;
+  }
+  return true;
+}
+
+// Movimentação
+window.addEventListener("keydown", e => {
+  let nx = mother.x;
+  let ny = mother.y;
+
+  if (e.key === "ArrowUp") ny--;
+  if (e.key === "ArrowDown") ny++;
+  if (e.key === "ArrowLeft") nx--;
+  if (e.key === "ArrowRight") nx++;
+
+  if (canMove(nx, ny)) {
+    mother.x = nx;
+    mother.y = ny;
+  }
+
+  draw();
+});
+
+draw();
+</script>
+
+</body>
+</html>
