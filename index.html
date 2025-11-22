@@ -1,168 +1,560 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Jogo do Labirinto - Mãe e Filha</title>
-  <style>
-    body {
-      margin: 0;
-      background: #111;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      color: white;
-      font-family: Arial, sans-serif;
-    }
-    canvas {
-      border: 4px solid white;
-      background: #222;
-    }
-    #ui {
-      position: absolute;
-      top: 20px;
-      left: 20px;
-    }
-    button {
-      padding: 10px 20px;
-      margin-right: 10px;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-      font-weight: bold;
-    }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Entre Cores e Caminhos — Labirinto</title>
+<style>
+  :root{
+    --bg:#0f1724;
+    --panel:#0b1220;
+    --accent:#60a5fa;
+    --tile-size:40px;
+  }
+  html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;color:#e6eef8;background:linear-gradient(180deg,#071028,#071a33) fixed;}
+  .wrap{display:flex;gap:18px;padding:18px;align-items:flex-start;justify-content:center;}
+  .panel{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border-radius:12px;padding:12px;box-shadow:0 6px 20px rgba(2,6,23,0.7);width:880px;}
+  header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+  header h1{font-size:20px;margin:0;color:#dff1ff;}
+  .controls{display:flex;gap:8px;align-items:center;}
+  button{background:#123141;border:1px solid rgba(255,255,255,0.03);color:#e6f3ff;padding:8px 12px;border-radius:8px;cursor:pointer;}
+  button.primary{background:linear-gradient(90deg,#3b82f6,#06b6d4);color:white;border:none;}
+  canvas{background:#eaf6ff;border-radius:8px;display:block;margin:10px auto;box-shadow:0 10px 30px rgba(2,6,23,0.5);}
+  .hud{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:6px 10px;color:#cfeeff;}
+  .info{display:flex;gap:12px;align-items:center;}
+  .tracker{display:flex;flex-direction:column;align-items:flex-start;font-size:14px;}
+  .signal{display:flex;gap:6px;align-items:center;}
+  .mini-map{width:140px;height:100px;background:rgba(0,0,0,0.25);border-radius:6px;padding:6px;display:flex;flex-direction:column;gap:6px;}
+  .legend{font-size:12px;color:#bfe8ff;}
+  .start-screen{padding:18px;text-align:center;}
+  .level-buttons{display:flex;gap:8px;justify-content:center;margin:12px 0;}
+  .message{margin-top:8px;color:#d7f0ff;font-size:13px;}
+  .footer{margin-top:8px;font-size:12px;color:#93c2dd;}
+  .small{font-size:12px;color:#b2d7ff}
+  .key-pill{display:inline-block;padding:4px 8px;border-radius:6px;background:#0b3b3b;color:#caffff}
+  .hud .face{font-size:20px}
+</style>
 </head>
 <body>
+<div class="wrap">
+  <div class="panel">
+    <header>
+      <h1>Entre Cores e Caminhos — Labirinto (2D)</h1>
+      <div class="controls">
+        <label for="level">Nível:</label>
+        <select id="level">
+          <option value="easy">Fácil</option>
+          <option value="medium">Médio</option>
+          <option value="hard">Difícil</option>
+        </select>
+        <button id="start" class="primary">Iniciar</button>
+        <button id="restart">Reiniciar</button>
+      </div>
+    </header>
 
-<div id="ui">
-  <button onclick="setLevel('easy')">Fácil</button>
-  <button onclick="setLevel('medium')">Médio</button>
-  <button onclick="setLevel('hard')">Difícil</button>
+    <div id="start-screen" class="start-screen">
+      <p style="color:#cfeeff">História: Uma mãe procura sua filha Ana, que usa uma pulseira de identificação.  
+      Use as setas/WASD para andar. Encontre Ana e traga-a em segurança.</p>
+      <div class="level-buttons">
+        <button data-lvl="easy">Fácil</button>
+        <button data-lvl="medium">Médio</button>
+        <button data-lvl="hard">Difícil</button>
+      </div>
+      <div class="message small">Colunas nas cores do autismo: amarelo, vermelho, verde e azul aparecem pelo mapa como elementos de cenário/obstáculo.</div>
+    </div>
+
+    <canvas id="game" width="800" height="600"></canvas>
+
+    <div class="hud">
+      <div class="info">
+        <div class="tracker">
+          <div><strong>Pulseira</strong> <span class="small">— Localização & expressão</span></div>
+          <div class="signal">
+            <div id="face" class="face">🙂</div>
+            <div id="signalText">Sinal: —</div>
+          </div>
+        </div>
+
+        <div class="mini-map" id="miniMap">
+          <div class="legend">Mini-mapa</div>
+          <canvas id="minimapCanvas" width="120" height="60" style="background:transparent;border-radius:4px;"></canvas>
+        </div>
+      </div>
+
+      <div style="text-align:right">
+        <div class="small">Teclas: ← ↑ → ↓ ou WASD</div>
+        <div class="small">Objetivo: encontrar Ana (ícone rosa)</div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div>Desenvolvido como protótipo — ajuste mapas e dificuldades conforme preferir.</div>
+    </div>
+  </div>
 </div>
 
-<canvas id="gameCanvas" width="600" height="600"></canvas>
-
 <script>
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
-
+/* ---------- Configurações e mapa ---------- */
+/* tile types:
+  0 empty
+  1 wall (impassável)
+  2 colYellow (amarelo) - decorativo/passável
+  3 colRed (vermelho) - impassável
+  4 colGreen (verde) - porta automática/passável
+  5 colBlue (azul) - checkpoint
+  6 furniture - bloqueia (impassável)
+  7 toy - reduz velocidade
+  8 doorLocked - trancada até chave
+  9 key - coleta
+  10 child (posição)
+*/
 const TILE = 40;
+const C = document.getElementById('game');
+const ctx = C.getContext('2d', { alpha: false });
+const minimapCanvas = document.getElementById('minimapCanvas');
+const mctx = minimapCanvas.getContext('2d');
 
-// Cores do autismo
-const COLORS = ["yellow", "red", "green", "blue"]; 
+const levels = {
+  easy: {
+    name:'Fácil',
+    w:20,h:15,
+    map:[
+      // 15 rows of 20 columns each - modular house layout (easy)
+      // 0..19 indexes
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,0,0,0,0,0,0,2,0,0,0,0,0,0,7,0,0,0,9,1],
+      [1,0,6,0,0,0,0,2,0,1,1,0,0,0,7,0,0,0,0,1],
+      [1,0,0,0,4,4,4,4,0,1,1,0,0,0,0,0,0,0,0,1],
+      [1,0,0,0,4,0,0,4,0,0,0,0,6,0,0,3,3,3,0,1],
+      [1,0,0,0,4,0,0,4,0,0,0,0,0,0,0,3,5,3,0,1],
+      [1,0,0,0,4,0,0,4,0,0,0,0,0,0,0,3,3,3,0,1],
+      [1,0,0,0,4,4,4,4,0,0,0,0,0,7,0,0,0,0,0,1],
+      [1,0,7,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,1],
+      [1,0,0,0,0,6,0,2,0,0,1,1,1,1,1,1,0,0,0,1],
+      [1,0,0,0,0,0,0,0,0,0,1,10,0,0,0,1,0,7,0,1],
+      [1,0,0,7,0,0,0,0,0,0,1,1,1,1,0,1,0,0,0,1],
+      [1,0,0,0,0,7,0,0,0,0,0,0,0,0,0,1,0,0,9,1],
+      [1,9,0,0,0,0,0,0,0,0,0,0,6,0,0,0,0,0,0,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+    ],
+    playerStart: {x:2,y:2}, // grid coords
+    childStart: {x:11,y:10}
+  },
 
-let level = "easy";
+  medium: {
+    name:'Médio',
+    w:20,h:15,
+    map:[
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,0,0,0,0,0,2,2,2,0,0,0,0,7,0,0,0,0,9,1],
+      [1,0,6,6,0,0,2,3,2,0,1,1,0,0,0,0,0,0,0,1],
+      [1,0,0,0,4,4,4,4,4,0,1,1,0,0,0,7,0,0,0,1],
+      [1,0,0,0,4,0,0,0,4,0,0,0,0,6,0,0,3,3,3,1],
+      [1,0,0,0,4,0,0,0,4,0,0,0,0,0,0,3,5,3,0,1],
+      [1,7,0,0,4,0,0,0,4,0,0,7,0,0,0,3,3,3,0,1],
+      [1,0,0,0,4,4,4,4,4,0,0,0,0,7,0,0,0,0,0,1],
+      [1,0,7,0,0,0,0,2,2,0,1,1,1,1,1,1,0,0,0,1],
+      [1,0,0,0,0,6,0,0,0,0,1,10,0,0,0,1,0,7,0,1],
+      [1,0,0,9,0,0,0,0,0,0,1,1,1,1,0,1,0,0,0,1],
+      [1,0,0,0,0,7,0,0,0,0,0,0,6,0,0,1,0,0,0,1],
+      [1,0,0,0,0,0,0,0,7,0,0,0,0,0,0,1,0,0,0,1],
+      [1,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+    ],
+    playerStart:{x:2,y:2},
+    childStart:{x:11,y:9}
+  },
 
-// Personagens
-const mother = { x: 1, y: 1, color: "white" };
-const child = { x: 13, y: 13, color: "cyan" }; // Colar autismo será desenhado
-
-// Obstáculos por nível
-const obstacles = {
-  easy: [ [5,5], [6,5], [7,5] ],
-  medium: [ [4,4], [4,5], [4,6], [8,8], [8,9] ],
-  hard: [ [3,3], [3,4], [3,5], [7,2], [8,2], [9,2], [10,10], [11,10], [12,10] ]
+  hard: {
+    name:'Difícil',
+    w:20,h:15,
+    map:[
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,0,0,0,2,2,2,2,2,0,0,0,0,7,0,0,9,0,0,1],
+      [1,0,6,6,0,3,3,3,2,0,1,1,0,0,0,0,0,0,0,1],
+      [1,0,0,0,4,4,8,4,4,0,1,1,0,0,7,0,0,0,0,1],
+      [1,0,0,0,4,0,0,0,4,0,0,0,0,6,0,0,3,3,3,1],
+      [1,0,0,0,4,0,7,0,4,0,0,0,0,0,0,3,5,3,0,1],
+      [1,7,0,0,4,0,0,0,4,0,0,7,0,0,9,3,3,3,0,1],
+      [1,0,9,0,4,4,4,4,4,0,0,0,0,7,0,0,0,0,0,1],
+      [1,0,7,0,0,0,0,2,0,0,1,1,1,1,1,1,0,0,0,1],
+      [1,0,0,0,0,6,0,2,0,0,1,10,0,0,0,1,0,7,0,1],
+      [1,0,0,0,0,0,0,0,0,0,1,1,1,1,0,1,0,0,0,1],
+      [1,0,0,7,0,0,0,0,0,0,0,0,6,0,0,1,0,0,0,1],
+      [1,0,0,0,0,7,0,0,0,0,0,0,0,0,0,1,0,0,9,1],
+      [1,9,0,0,0,0,0,0,0,0,0,0,6,0,0,0,0,0,0,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+    ],
+    playerStart:{x:2,y:2},
+    childStart:{x:11,y:9}
+  }
 };
 
-function setLevel(l) {
-  level = l;
-  resetPositions();
+let state = {
+  levelKey:'easy',
+  map:[],
+  w:20,h:15,
+  player:{x:2,y:2,px:0,py:0,w:28,h:28,speed:120},
+  child:{x:11,y:10},
+  keysCollected:0,
+  hasStarted:false,
+  timeElapsed:0,
+  lastTick:0,
+  face:'🙂',
+  found:false
+};
+
+/* ---------- Helpers ---------- */
+function loadLevel(key){
+  const lvl = levels[key];
+  state.levelKey = key;
+  state.map = lvl.map.map(row => row.slice());
+  state.w = lvl.w; state.h = lvl.h;
+  state.player.x = lvl.playerStart.x; state.player.y = lvl.playerStart.y;
+  state.player.px = state.player.x * TILE + (TILE - state.player.w)/2;
+  state.player.py = state.player.y * TILE + (TILE - state.player.h)/2;
+  state.child.x = lvl.childStart.x; state.child.y = lvl.childStart.y;
+  state.keysCollected = 0;
+  state.timeElapsed = 0;
+  state.found = false;
+  state.hasStarted = true;
+  state.lastTick = performance.now();
+  updateHUD();
   draw();
 }
 
-function resetPositions() {
-  mother.x = 1;
-  mother.y = 1;
-  child.x = 13;
-  child.y = 13;
+function getTile(x,y){
+  if(x<0||y<0||x>=state.w||y>=state.h) return 1;
+  return state.map[y][x];
+}
+function setTile(x,y,val){ if(x>=0&&y>=0&&x<state.w&&y<state.h) state.map[y][x]=val; }
+
+function isBlocking(tile){
+  return tile === 1 || tile === 3 || tile === 6 || tile === 8;
 }
 
-function drawHouseGrid() {
-  for (let y = 0; y < 15; y++) {
-    for (let x = 0; x < 15; x++) {
-      const color = COLORS[(x + y) % COLORS.length];
-      ctx.fillStyle = color;
-      ctx.fillRect(x * TILE, y * TILE, TILE, TILE);
+/* ---------- Input ---------- */
+const keys = {};
+window.addEventListener('keydown', e=>{
+  keys[e.key.toLowerCase()] = true;
+});
+window.addEventListener('keyup', e=>{
+  keys[e.key.toLowerCase()] = false;
+});
+
+/* ---------- UI ---------- */
+document.getElementById('start').addEventListener('click', ()=>{
+  const lvl = document.getElementById('level').value;
+  loadLevel(lvl);
+});
+document.getElementById('restart').addEventListener('click', ()=> loadLevel(state.levelKey));
+document.querySelectorAll('.level-buttons button').forEach(b=>{
+  b.addEventListener('click', ()=> {
+    document.getElementById('level').value = b.dataset.lvl;
+    loadLevel(b.dataset.lvl);
+  })
+});
+
+/* ---------- Game Loop ---------- */
+function update(dt){
+  if(!state.hasStarted || state.found) return;
+
+  state.timeElapsed += dt;
+
+  // Movement inputs
+  let dx = 0, dy = 0;
+  if (keys['arrowleft'] || keys['a']) dx = -1;
+  if (keys['arrowright'] || keys['d']) dx = 1;
+  if (keys['arrowup'] || keys['w']) dy = -1;
+  if (keys['arrowdown'] || keys['s']) dy = 1;
+  // Normalize
+  if(dx!==0 && dy!==0){ dx*=0.7071; dy*=0.7071; }
+
+  // base speed
+  let sp = state.player.speed;
+
+  // Check tile under feet for speed modifiers (toy = 7 slows)
+  const footTileX = Math.floor((state.player.px + state.player.w/2)/TILE);
+  const footTileY = Math.floor((state.player.py + state.player.h/2)/TILE);
+  const underTile = getTile(footTileX, footTileY);
+  if(underTile === 7) sp *= 0.5;
+
+  // move with collision
+  const newPx = state.player.px + dx * sp * dt;
+  const newPy = state.player.py + dy * sp * dt;
+  const candidate = {px:newPx,py:newPy,w:state.player.w,h:state.player.h};
+
+  function collidesAt(px,py){
+    // check corners against map
+    const corners = [
+      [px,py],[px+candidate.w-1,py],[px,py+candidate.h-1],[px+candidate.w-1,px+candidate.h-1]
+    ];
+    for(const c of corners){
+      const gx = Math.floor(c[0]/TILE), gy = Math.floor(c[1]/TILE);
+      const t = getTile(gx,gy);
+      if(isBlocking(t)) return true;
+    }
+    return false;
+  }
+
+  // separate axis movement to allow sliding
+  let attemptedX = newPx, attemptedY = state.player.py;
+  if(!collidesAt(attemptedX, attemptedY)) state.player.px = attemptedX;
+  attemptedX = state.player.px; attemptedY = newPy;
+  if(!collidesAt(attemptedX, attemptedY)) state.player.py = attemptedY;
+
+  // Update grid position
+  state.player.x = Math.floor((state.player.px + state.player.w/2)/TILE);
+  state.player.y = Math.floor((state.player.py + state.player.h/2)/TILE);
+
+  // Interact with tiles
+  const tile = getTile(state.player.x, state.player.y);
+  if(tile === 9){
+    state.keysCollected++;
+    setTile(state.player.x, state.player.y, 0);
+    // auto open nearest locked door (for simplicity)
+    for(let yy=0; yy<state.h; yy++){
+      for(let xx=0; xx<state.w; xx++){
+        if(getTile(xx,yy)===8){ setTile(xx,yy,4); xx=state.w; yy=state.h; break; }
+      }
+    }
+  }
+
+  // If standing on blue checkpoint, mark (we'll show on minimap by preserving tile)
+  // If standing on child, found -> end
+  if(state.player.x === state.child.x && state.player.y === state.child.y){
+    state.found = true;
+    state.face = '🙂';
+    setTimeout(()=> alert('Você encontrou Ana! A mãe a abraça e a história segue para a calma ❤'), 100);
+  }
+
+  // Update pulseira expression/signal
+  updateTracker();
+
+  // animate map elements for hard mode (lights flashing)
+  if(state.levelKey === 'hard'){
+    // randomly toggle some decorative tiles for atmosphere
+    if(Math.random() < 0.01) {
+      for(let i=0;i<3;i++){
+        const rx = 2 + Math.floor(Math.random()* (state.w-4));
+        const ry = 2 + Math.floor(Math.random()* (state.h-4));
+        if(getTile(rx,ry)===2) setTile(rx,ry,0);
+      }
     }
   }
 }
 
-function drawObstacles() {
-  ctx.fillStyle = "black";
-  for (const [ox, oy] of obstacles[level]) {
-    ctx.fillRect(ox * TILE, oy * TILE, TILE, TILE);
+function updateTracker(){
+  const dx = state.child.x - state.player.x;
+  const dy = state.child.y - state.player.y;
+  const dist = Math.sqrt(dx*dx + dy*dy);
+  // Decide face based on distance and time
+  if(dist <= 2) state.face = '🙂';
+  else if(dist <= 7) state.face = '😟';
+  else state.face = (state.timeElapsed > 45 && state.levelKey==='hard') ? '😢' : '😟';
+  // Signal description (easy: direction arrow; medium: near/medium/far; hard: only strength)
+  const faceEl = document.getElementById('face');
+  faceEl.textContent = state.face;
+  const sig = document.getElementById('signalText');
+  if(state.levelKey === 'easy'){
+    const ax = Math.sign(dx), ay = Math.sign(dy);
+    // direction text
+    let dir = '';
+    if(ay === -1) dir += ' ↑';
+    if(ay === 1) dir += ' ↓';
+    if(ax === -1) dir += ' ←';
+    if(ax === 1) dir += ' →';
+    if(dir==='') dir = 'Por perto';
+    sig.textContent = 'Sinal:' + dir;
+  } else if(state.levelKey === 'medium'){
+    if(dist <= 3) sig.textContent = 'Sinal: Muito perto';
+    else if(dist <= 8) sig.textContent = 'Sinal: Próximo';
+    else sig.textContent = 'Sinal: Longe';
+  } else {
+    // hard
+    const strength = Math.max(0, Math.min(5, Math.floor(10 - dist)));
+    sig.textContent = 'Sinal: ' + '▮'.repeat(strength) + '▯'.repeat(5-strength);
   }
 }
 
-function drawCharacters() {
-  // Mãe
-  ctx.fillStyle = mother.color;
+/* ---------- Rendering ---------- */
+function drawGrid(){
+  // clear
+  ctx.fillStyle = '#eaf6ff';
+  ctx.fillRect(0,0,C.width,C.height);
+
+  // draw tiles
+  for(let y=0;y<state.h;y++){
+    for(let x=0;x<state.w;x++){
+      const t = getTile(x,y);
+      const px = x * TILE, py = y * TILE;
+      // floor
+      ctx.fillStyle = '#f8fbff';
+      ctx.fillRect(px,py,TILE-1,TILE-1);
+
+      // decorations/obstacles
+      if(t===1){
+        // wall - dark
+        ctx.fillStyle = '#2b3b4b'; ctx.fillRect(px,py,TILE-1,TILE-1);
+      } else if(t===2){
+        // yellow column - passable
+        ctx.fillStyle = '#ffd24d';
+        ctx.fillRect(px+TILE*0.25,py+TILE*0.25,TILE*0.5,TILE*0.5);
+      } else if(t===3){
+        // red column - impassable
+        ctx.fillStyle = '#ef4444';
+        ctx.fillRect(px+TILE*0.15,py+TILE*0.15,TILE*0.7,TILE*0.7);
+      } else if(t===4){
+        // green column / door - passable
+        ctx.fillStyle = '#34d399';
+        ctx.fillRect(px+TILE*0.2,py+TILE*0.2,TILE*0.6,TILE*0.6);
+      } else if(t===5){
+        // blue checkpoint
+        ctx.fillStyle = '#60a5fa';
+        ctx.beginPath();
+        ctx.arc(px+TILE/2,py+TILE/2,TILE*0.18,0,Math.PI*2);
+        ctx.fill();
+      } else if(t===6){
+        // furniture - table
+        ctx.fillStyle = '#7b5e57';
+        ctx.fillRect(px+4,py+6,TILE-8,TILE-12);
+      } else if(t===7){
+        // toy - slows
+        ctx.fillStyle = '#ffb4c1';
+        ctx.fillRect(px+TILE*0.28,py+TILE*0.28,TILE*0.44,TILE*0.44);
+      } else if(t===8){
+        // locked door
+        ctx.fillStyle = '#6b7280';
+        ctx.fillRect(px+TILE*0.2,py+TILE*0.2,TILE*0.6,TILE*0.6);
+        ctx.fillStyle='#f5f5f5'; ctx.fillRect(px+TILE*0.55,py+TILE*0.45,4,4);
+      } else if(t===9){
+        // key
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillRect(px+TILE*0.35,py+TILE*0.42,TILE*0.3,TILE*0.12);
+      } else if(t===10){
+        // child placeholder (shouldn't usually be on map - we draw child sprite separately)
+      }
+      // grid lines lightly
+      ctx.strokeStyle = 'rgba(12,34,56,0.03)';
+      ctx.strokeRect(px,py,TILE-1,TILE-1);
+    }
+  }
+
+  // draw child
+  const cx = state.child.x * TILE + TILE/2;
+  const cy = state.child.y * TILE + TILE/2;
+  // child sprite: small circle with pink clothing and a bracelet
   ctx.beginPath();
-  ctx.arc(mother.x * TILE + 20, mother.y * TILE + 20, 15, 0, Math.PI * 2);
+  ctx.fillStyle = '#ff9fb3';
+  ctx.arc(cx, cy-6, 10, 0, Math.PI*2);
   ctx.fill();
+  ctx.fillStyle = '#ff6fa3';
+  ctx.fillRect(cx-6, cy+4, 12, 10); // body
+  // bracelet/pulseira (multi-color)
+  ctx.fillStyle = '#3b82f6'; ctx.fillRect(cx+8,cy-6,6,4);
+  ctx.fillStyle = '#34d399'; ctx.fillRect(cx+8,cy-2,6,4);
 
-  // Criança
-  ctx.fillStyle = child.color;
-  ctx.beginPath();
-  ctx.arc(child.x * TILE + 20, child.y * TILE + 20, 15, 0, Math.PI * 2);
-  ctx.fill();
+  // draw player (mãe)
+  ctx.fillStyle = '#073b4c';
+  ctx.fillRect(state.player.px, state.player.py, state.player.w, state.player.h);
+  // head
+  ctx.fillStyle = '#ffd7b5';
+  ctx.fillRect(state.player.px+6, state.player.py-10, state.player.w-12, 10);
 
-  // Colar do autismo (quatro cores)
-  const necklaceColors = COLORS;
-  let angle = 0;
-  necklaceColors.forEach(c => {
-    ctx.strokeStyle = c;
-    ctx.beginPath();
-    ctx.arc(child.x * TILE + 20, child.y * TILE + 20, 20, angle, angle + 0.5);
-    ctx.stroke();
-    angle += 0.5;
-  });
-}
+  // draw arrow/direction indicator between player and child (small, not intrusive)
+  const dx = state.child.x - state.player.x;
+  const dy = state.child.y - state.player.y;
+  // if easy show directional arrow
+  if(state.levelKey === 'easy'){
+    if(dx !== 0 || dy !== 0){
+      const nx = (dx>0?1:(dx<0?-1:0));
+      const ny = (dy>0?1:(dy<0?-1:0));
+      const startX = state.player.px + state.player.w/2;
+      const startY = state.player.py + state.player.h/2;
+      ctx.save();
+      ctx.strokeStyle = '#ff6b6b';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(startX, startY);
+      ctx.lineTo(startX + nx*30, startY + ny*30);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
 
-function draw() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  drawHouseGrid();
-  drawObstacles();
-  drawCharacters();
-  checkWin();
-}
-
-function checkWin() {
-  if (mother.x === child.x && mother.y === child.y) {
-    setTimeout(() => alert("Você encontrou sua filha! 💙"), 100);
+  // Possibly add darkness overlay for hard level in certain rooms (simulate noisy rooms)
+  if(state.levelKey === 'hard'){
+    // reduce visibility if near certain tiles (simulate sensory overload)
+    const px = state.player.x, py = state.player.y;
+    const t = getTile(px,py);
+    if(t === 3 || t === 8){
+      // overlay partial darkness
+      ctx.fillStyle = 'rgba(3,6,15,0.55)';
+      ctx.fillRect(0,0,C.width,C.height);
+    } else {
+      // slight vignette based on time to simulate distractions
+      const alpha = 0.12 + Math.sin(state.timeElapsed)*0.06;
+      ctx.fillStyle = `rgba(3,6,15,${alpha})`;
+      ctx.fillRect(0,0,C.width,C.height);
+    }
   }
 }
 
-function canMove(nx, ny) {
-  if (nx < 0 || ny < 0 || nx > 14 || ny > 14) return false;
-  for (const [ox, oy] of obstacles[level]) {
-    if (ox === nx && oy === ny) return false;
+function drawMiniMap(){
+  mctx.clearRect(0,0,minimapCanvas.width,minimapCanvas.height);
+  const cellW = minimapCanvas.width / state.w;
+  const cellH = minimapCanvas.height / state.h;
+  for(let y=0;y<state.h;y++){
+    for(let x=0;x<state.w;x++){
+      const t = getTile(x,y);
+      if(t===1) mctx.fillStyle='#0b2b3b';
+      else if(t===3) mctx.fillStyle='#7b2b2b';
+      else if(t===2) mctx.fillStyle='#e8c56b';
+      else if(t===4) mctx.fillStyle='#6bd5a8';
+      else if(t===5) mctx.fillStyle='#7fb6f8';
+      else mctx.fillStyle='#cfeeff';
+      mctx.fillRect(x*cellW,y*cellH,cellW,cellH);
+    }
   }
-  return true;
+  // draw player and child
+  mctx.fillStyle='#073b4c';
+  mctx.fillRect(state.player.x*cellW, state.player.y*cellH, cellW, cellH);
+  mctx.fillStyle='#ff9fb3';
+  mctx.fillRect(state.child.x*cellW, state.child.y*cellH, cellW, cellH);
 }
 
-// Movimentação
-window.addEventListener("keydown", e => {
-  let nx = mother.x;
-  let ny = mother.y;
+function drawHUD(){
+  document.getElementById('face').textContent = state.face;
+}
 
-  if (e.key === "ArrowUp") ny--;
-  if (e.key === "ArrowDown") ny++;
-  if (e.key === "ArrowLeft") nx--;
-  if (e.key === "ArrowRight") nx++;
+function draw(){
+  drawGrid();
+  drawMiniMap();
+  drawHUD();
+}
 
-  if (canMove(nx, ny)) {
-    mother.x = nx;
-    mother.y = ny;
-  }
-
+/* ---------- Main loop ---------- */
+function tick(now){
+  const dt = Math.min(0.05, (now - (state.lastTick||now)) / 1000);
+  state.lastTick = now;
+  update(dt);
   draw();
-});
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
 
-draw();
+/* ---------- initial setup ---------- */
+document.getElementById('level').value = 'easy';
+function updateHUD(){
+  document.getElementById('face').textContent = state.face;
+  document.getElementById('signalText').textContent = 'Sinal: —';
+}
+updateHUD();
+
+// auto start easy by default
+loadLevel('easy');
+
 </script>
-
 </body>
 </html>
+
