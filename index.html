@@ -3,154 +3,229 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AURA: O Labirinto do Encontro</title>
+    <title>AURA: O Labirinto do Encontro - Nível Difícil</title>
 
     <style>
+        /* ------------------------------------- */
+        /* CÓDIGO CSS (Estilo e Design do Labirinto) */
+        /* ------------------------------------- */
         body {
-            font-family: Arial, sans-serif;
-            text-align: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f0f8ff; /* Fundo suave */
+            color: #333;
+            padding: 20px;
         }
 
+        h1 {
+            color: #d0021b; /* Vermelho para o Nível Difícil */
+            margin-bottom: 10px;
+        }
+
+        #game-info {
+            display: flex;
+            gap: 40px;
+            margin-bottom: 20px;
+            font-size: 1.1em;
+            padding: 10px 20px;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            background-color: #fff;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        #focus-meter {
+            color: #d0021b; /* Vermelho para alerta/estresse */
+            font-weight: bold;
+        }
+        
+        #aura-signal {
+            font-weight: bold;
+        }
+
+        /* Ajuste do Grid para 15x15 */
         #maze-container {
             display: grid;
-            grid-template-columns: repeat(12, 40px);
-            grid-template-rows: repeat(12, 40px);
-            border: 3px solid black;
-            margin: 20px auto;
+            grid-template-columns: repeat(15, 35px); /* Reduzido para caber 15 colunas */
+            grid-template-rows: repeat(15, 35px);
+            border: 4px solid #1a1a1a;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+            background-color: #fff;
         }
 
         .tile {
-            width: 40px;
-            height: 40px;
+            width: 35px;
+            height: 35px;
             box-sizing: border-box;
             display: flex;
             justify-content: center;
             align-items: center;
             font-weight: bold;
+            font-size: 0.8em;
+            transition: background-color 0.1s;
         }
 
-        /* Cores das Paredes (Azul) */
+        /* Paredes (Azul) - Muros de Comunicação */
         .wall {
-            background-color: blue; 
-            border: 1px solid darkblue;
+            background-color: #4a90e2; 
+            border: 1px solid #357ae8;
+        }
+        
+        /* Recuo Emocional (Vermelho) - Obstáculo R */
+        .retreat {
+            background-color: #d0021b; /* Vermelho forte */
+            color: white;
+            font-size: 1.2em;
+            text-shadow: 1px 1px 1px #000;
         }
 
-        /* Caminho */
-        .path {
-            background-color: #f0f0f0;
-        }
-
-        /* Ponto de Calma (Verde) */
+        /* Ponto de Calma (Verde) - Obstáculo G */
         .calm {
-            background-color: green;
+            background-color: #7ed321; 
             color: white;
         }
 
-        /* Início (Mãe) */
-        .start {
-            background-color: pink;
-            color: black;
-        }
-
-        /* Fim (Aura) */
+        /* Fim (Aura) - Amarelo/Roxo */
         .end {
-            background-color: yellow;
-            color: purple;
-            font-size: 1.5em;
-            animation: pulse 1s infinite alternate;
+            background-color: #f8e71c; 
+            color: #9013fe;
+            font-size: 1.2em;
+            animation: pulse 1s infinite alternate; 
         }
 
-        @keyframes pulse {
-            from { box-shadow: 0 0 5px yellow; }
-            to { box-shadow: 0 0 15px orange; }
-        }
-
-        /* Personagem */
+        /* Estilo do Personagem (Mãe) */
         .player {
-            background-color: #f77f00;
+            background-color: #ff69b4;
+            border: 3px solid #1a1a1a;
             border-radius: 50%;
             z-index: 10;
-            position: relative;
+            line-height: 35px; 
+            font-size: 1.2em;
+        }
+        
+        @keyframes pulse {
+            from { box-shadow: 0 0 5px #f8e71c; }
+            to { box-shadow: 0 0 15px orange, 0 0 20px #d0021b; }
         }
 
-        /* Botões */
-        #level-buttons button {
-            padding: 10px 20px;
-            margin: 5px;
-            background-color: #0066ff;
-            color: white;
-            border: none;
-            font-weight: bold;
-            border-radius: 8px;
-            cursor: pointer;
-        }
-
-        #level-buttons button:hover {
-            background-color: #0044aa;
+        .instructions {
+            margin-top: 15px;
+            font-style: italic;
+            color: #666;
         }
     </style>
 </head>
 <body>
-
-    <h1>AURA: O Labirinto do Encontro</h1>
-
-    <div id="level-buttons">
-        <button onclick="loadLevel(EASY_MAP)">Nível Fácil</button>
-        <button onclick="loadLevel(LEVEL_2_MAP)">Nível Médio</button>
+    <h1>AURA: O Labirinto do Encontro (NÍVEL DIFÍCIL)</h1>
+    
+    <div id="game-info">
+        <div id="focus-meter">Foco: <span id="f-value">100</span>%</div>
+        <div id="aura-signal">Sinal do Colar: <span>🟢 Calma</span></div>
     </div>
 
-    <div id="maze-container"></div>
+    <div id="maze-container">
+        </div>
+    
+    <p class="instructions">Use as setas (↑ ↓ ← →) para mover Mariana pelos cômodos da casa. Cuidado com o Recuo Emocional (R)!</p>
 
     <script>
-        // --- Nível Fácil (10x10) ---
-        const EASY_MAP = [
-            ['M', '_', '_', '#', '#', '_', '_', '_', '_', '_'],
-            ['#', '#', '_', '#', '_', '_', 'G', '_', '#', '_'],
-            ['_', '_', '_', '#', '#', '#', '#', '#', '#', '_'],
-            ['_', '#', '_', '_', '_', '_', '_', '_', '#', '_'],
-            ['_', '#', '#', '#', '#', '#', '#', '_', '#', '_'],
-            ['_', '_', '_', '_', '_', '_', '#', '_', '#', '_'],
-            ['#', '#', '#', '#', '#', '_', '#', '_', '_', '_'],
-            ['_', 'G', '#', '_', '_', '_', '_', '#', '#', '#'],
-            ['_', '_', '_', '_', '#', '#', '_', '_', 'A', '_'],
-            ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#']
-        ];
+        /* ------------------------------------- */
+        /* CÓDIGO JAVASCRIPT (Lógica do Jogo) */
+        /* ------------------------------------- */
 
-        // --- Nível Médio (12x12) ---
-        const LEVEL_2_MAP = [
-            ['M','_','_','#','#','#','_','_','_','#','_','_'],
-            ['#','#','_','#','G','#','_','#','_','#','_','#'],
-            ['_','_','_','_','_','#','_','#','_','_','_','#'],
-            ['_','#','#','#','_','#','_','#','#','#','_','_'],
-            ['_','_','G','#','_','_','_','_','_','#','_','_'],
-            ['#','#','_','#','#','#','#','_','_','#','#','_'],
-            ['_','_','_','_','G','_','#','_','_','_','_','_'],
-            ['_','#','#','#','#','_','#','#','#','#','#','_'],
-            ['_','_','_','_','_','_','_','G','_','_','_','_'],
-            ['#','#','#','#','#','#','_','#','#','#','#','_'],
-            ['_','_','_','_','G','_','_','_','_','_','#','_'],
-            ['_','#','#','#','#','#','#','#','#','_','A','_']
+        // --- 1. Definição do Mapa do Nível Difícil (15x15) ---
+        // M: Mãe, A: Aura, #: Parede (Azul), G: Ponto de Calma (Verde), R: Recuo Emocional (Vermelho)
+        const HARD_MAP = [
+            // L1: M = HALL/ENTRADA (Início)
+            ['M', '#', '#', '#', '#', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_'], 
+            // L2: Corredor da Entrada
+            ['_', '_', '_', '_', '_', '_', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+            // L3: Início dos Quartos
+            ['_', '#', '#', '#', '#', '#', '_', '_', '_', '_', '_', '_', '_', '_', '_'],
+            // L4: Quartos
+            ['_', '_', '_', '_', '_', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+            // L5: Quartos (área complexa)
+            ['#', '#', '#', '#', '#', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_'],
+            // L6: Corredor Principal
+            ['#', '_', '_', '_', '_', '_', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+            // L7: Sala de Estar (Início da área de stress)
+            ['#', '_', '#', '#', '#', '#', '#', '_', '_', '_', '_', '_', '_', '_', '_'],
+            // L8: Sala de Estar (Caminho tortuoso)
+            ['_', '_', '_', '#', '#', '_', '_', '#', '#', '#', '#', '#', '#', '#', '#'],
+            // L9: Sala de Estar/Canto do Sofá
+            ['_', '#', '_', '#', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_'],
+            // L10: Área de Serviço/Cozinha (Perto do Recuo Emocional)
+            ['_', '#', 'R', '#', '#', '#', '#', '#', '#', '_', '#', '#', '#', '#', '#'],
+            // L11: Cozinha/Lavanderia (Ponto de Calma)
+            ['_', '#', '_', '_', '_', '_', '_', '_', '_', '_', '#', 'G', '_', '_', '_'],
+            // L12: Corredor para Banheiro
+            ['_', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+            // L13: Banheiro/Área Molhada (Transição)
+            ['_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_'],
+            // L14: Último Corredor para o Quarto da Aura
+            ['#', '#', '#', '#', '#', '#', '_', '#', '#', '#', '#', '#', '#', '#', '_'],
+            // L15: QUARTO DA AURA (Objetivo Final)
+            ['_', '_', '_', '_', '_', '_', 'A', '_', '_', '_', '_', '_', '_', '_', '_']
         ];
+        
+        // Define o mapa atual como o Difícil
+        const CURRENT_MAP = HARD_MAP;
 
-        let playerPos = { x: 0, y: 0 };
+        let playerPos = { x: 0, y: 0 }; 
+        let focusValue = 100;
         const mazeContainer = document.getElementById('maze-container');
+        const focusMeterDisplay = document.getElementById('f-value');
+        const auraSignalDisplay = document.querySelector('#aura-signal span');
+        const mapHeight = CURRENT_MAP.length; // 15
+        const mapWidth = CURRENT_MAP[0].length; // 15
+        
+        let auraPos = { x: 6, y: 14 }; // Posição de 'A' (Aura)
 
-        function loadLevel(map) {
-            currentMap = JSON.parse(JSON.stringify(map)); // evita alterar original
-            drawMaze(currentMap);
+        // --- 2. Funções de Atualização e Feedback ---
+        
+        function updateFocus(change) {
+            focusValue = Math.min(100, Math.max(0, focusValue + change));
+            focusMeterDisplay.textContent = focusValue;
+            
+            // Feedback de cor para o foco baixo
+            if (focusValue <= 20) {
+                 focusMeterDisplay.style.color = 'red';
+            } else {
+                 focusMeterDisplay.style.color = '#d0021b';
+            }
+
+            if (focusValue === 0) {
+                alert("O Foco se esgotou! A pressão foi demais. Tente respirar e buscar novamente.");
+                resetGame();
+            }
         }
+        
+        function updateAuraSignal() {
+            // Distância de Manhattan 
+            const distance = Math.abs(playerPos.x - auraPos.x) + Math.abs(playerPos.y - auraPos.y);
+            let signalText;
+
+            if (distance <= 5) {
+                signalText = '🔴 Perto! (Amarelo Dourado)';
+                auraSignalDisplay.style.color = '#f5a623';
+            } else if (distance <= 12) {
+                signalText = '🟡 Médio (Azul Pulsante)';
+                auraSignalDisplay.style.color = '#4a90e2';
+            } else {
+                signalText = '🟢 Distante (Verde Calmo)';
+                auraSignalDisplay.style.color = '#7ed321';
+            }
+            auraSignalDisplay.textContent = signalText;
+        }
+
+        // --- 3. Função de Renderização e Posicionamento do Jogador ---
 
         function drawMaze(map) {
             mazeContainer.innerHTML = '';
-
-            let height = map.length;
-            let width = map[0].length;
-
-            mazeContainer.style.gridTemplateColumns = `repeat(${width}, 40px)`;
-            mazeContainer.style.gridTemplateRows = `repeat(${height}, 40px)`;
-
-            for (let y = 0; y < height; y++) {
-                for (let x = 0; x < width; x++) {
+            for (let y = 0; y < mapHeight; y++) {
+                for (let x = 0; x < mapWidth; x++) {
                     const tile = document.createElement('div');
                     tile.classList.add('tile');
                     tile.dataset.x = x;
@@ -164,64 +239,139 @@
                             tile.classList.add('calm');
                             tile.textContent = 'G';
                             break;
+                        case 'R':
+                            tile.classList.add('retreat');
+                            tile.textContent = 'R';
+                            break; 
                         case 'A':
                             tile.classList.add('end');
                             tile.textContent = 'A';
+                            auraPos = {x: x, y: y};
                             break;
                         case 'M':
-                            playerPos = { x, y };
+                            playerPos = { x: x, y: y };
                             tile.classList.add('start');
                             break;
+                        case '_':
                         default:
                             tile.classList.add('path');
+                            break;
                     }
-
                     mazeContainer.appendChild(tile);
                 }
             }
-
             placePlayer();
+            updateAuraSignal();
         }
 
         function placePlayer() {
-            const oldPlayer = document.querySelector('.player');
-            if (oldPlayer) oldPlayer.classList.remove('player');
-
-            const newTile = document.querySelector(`[data-x="${playerPos.x}"][data-y="${playerPos.y}"]`);
-            if (newTile) {
-                newTile.classList.add('player');
-                newTile.textContent = '👩';
+            const oldPlayerTile = document.querySelector('.player');
+            if (oldPlayerTile) {
+                oldPlayerTile.classList.remove('player');
+                oldPlayerTile.textContent = ''; 
+                
+                // Restaura o conteúdo visual do tile subjacente
+                const tileType = CURRENT_MAP[oldPlayerTile.dataset.y][oldPlayerTile.dataset.x];
+                if (tileType === 'G' || tileType === 'R') {
+                     oldPlayerTile.textContent = tileType;
+                }
+            }
+            
+            const newPlayerTile = document.querySelector(`[data-x="${playerPos.x}"][data-y="${playerPos.y}"]`);
+            if (newPlayerTile) {
+                newPlayerTile.classList.add('player');
+                newPlayerTile.textContent = '👩'; // Representação da Mãe
             }
         }
 
+        // --- 4. Lógica de Movimento e Interações ---
         function movePlayer(dx, dy) {
             const newX = playerPos.x + dx;
             const newY = playerPos.y + dy;
+            
+            // 1. Verificar Limites
+            if (newX < 0 || newX >= mapWidth || newY < 0 || newY >= mapHeight) {
+                return; 
+            }
 
-            if (!currentMap[newY] || !currentMap[newY][newX]) return;
-            const next = currentMap[newY][newX];
+            const nextTile = CURRENT_MAP[newY][newX];
 
-            if (next === '#') return;
+            // Colisão com Recuo Emocional (R - Cor Vermelha)
+            if (nextTile === 'R') {
+                updateFocus(-20); // Perda de Foco severa
+                console.log("Colisão! Recuo Emocional (R). Foco atual: " + focusValue);
+                
+                // Mecânica de Recuo (volta 3 passos na direção oposta)
+                const backX = playerPos.x - (dx * 3);
+                const backY = playerPos.y - (dy * 3);
+                
+                // Garante que o recuo não vá para fora dos limites
+                playerPos.x = Math.min(mapWidth - 1, Math.max(0, backX));
+                playerPos.y = Math.min(mapHeight - 1, Math.max(0, backY));
+                
+                placePlayer(); // Coloca o jogador na nova posição de recuo
+                return; 
+            }
 
+            // Colisão com Parede Azul (#)
+            if (nextTile === '#') {
+                updateFocus(-10); // Perda de Foco padrão
+                return; 
+            }
+            
+            // Ponto de Calma (G)
+            if (nextTile === 'G') {
+                updateFocus(5); // Pequeno ganho de Foco
+            }
+            
+            // 4. Atualizar Posição
             playerPos.x = newX;
             playerPos.y = newY;
             placePlayer();
+            updateFocus(-1); // Perda de Foco a cada movimento
+            updateAuraSignal();
 
-            if (next === 'A') {
-                alert("Você encontrou a Aura! ❤️");
+            // 5. Verificação de Condição de Vitória (A = Aura)
+            if (nextTile === 'A') {
+                gameOver(true);
+            } 
+        }
+        
+        function gameOver(victory) {
+            if (victory) {
+                alert("Vitória no Nível Difícil! AURA agradece a ajuda. O Encontro é o início da Compreensão.");
             }
+            
+            setTimeout(resetGame, 100);
+        }
+        
+        function resetGame() {
+             focusValue = 100;
+             updateFocus(0);
+             drawMaze(CURRENT_MAP); // Redesenha o mapa
         }
 
-        document.addEventListener('keydown', e => {
-            if (e.key === "ArrowUp") movePlayer(0, -1);
-            if (e.key === "ArrowDown") movePlayer(0, 1);
-            if (e.key === "ArrowLeft") movePlayer(-1, 0);
-            if (e.key === "ArrowRight") movePlayer(1, 0);
+
+        // --- 5. Event Listener para Teclas (Movimentação) ---
+        document.addEventListener('keydown', (e) => {
+            switch (e.key) {
+                case 'ArrowUp':
+                    movePlayer(0, -1);
+                    break;
+                case 'ArrowDown':
+                    movePlayer(0, 1);
+                    break;
+                case 'ArrowLeft':
+                    movePlayer(-1, 0);
+                    break;
+                case 'ArrowRight':
+                    movePlayer(1, 0);
+                    break;
+            }
         });
 
-        // Inicia com o nível fácil
-        let currentMap = EASY_MAP;
-        loadLevel(EASY_MAP);
+        // Inicia o jogo
+        drawMaze(CURRENT_MAP);
     </script>
 </body>
 </html>
