@@ -138,7 +138,7 @@
         const focusMeterDisplay = document.getElementById('f-value');
         const auraSignalDisplay = document.querySelector('#aura-signal span');
         const keyStatusDisplay = document.querySelector('#key-status span'); 
-        const messageDisplay = document.getElementById('message-display'); // Novo elemento
+        const messageDisplay = document.getElementById('message-display'); 
         
         const mapHeight = ORIGINAL_MAP.length; 
         const mapWidth = ORIGINAL_MAP[0].length; 
@@ -162,7 +162,7 @@
                 gameOver(false, true); 
                 return;
             }
-            messageDisplay.textContent = ''; // Limpa mensagens de aviso
+            messageDisplay.textContent = ''; 
         }
         
         function updateKeyStatus() { 
@@ -222,7 +222,6 @@
                 
                 const tileType = CURRENT_MAP[oldPlayerTile.dataset.y][oldPlayerTile.dataset.x];
                 
-                // Redesenha o conteúdo original do tile anterior, se for um item permanente
                 if (tileType === 'S') { oldPlayerTile.textContent = EMOJI_SOFA; }
                 else if (tileType === 'B') { oldPlayerTile.textContent = EMOJI_BED; }
                 else if (tileType === 'T') { oldPlayerTile.textContent = EMOJI_TABLE; }
@@ -276,7 +275,6 @@
                     
                     CURRENT_MAP[newY][newX] = '_';
                     
-                    // Atualiza o HTML do tile L para caminho livre
                     const unlockedTile = document.querySelector(`[data-x="${newX}"][data-y="${newY}"]`);
                     if (unlockedTile) {
                         unlockedTile.classList.remove('locked-door');
@@ -286,7 +284,6 @@
                     
                     updateKeyStatus();
                     
-                    // Continua o movimento
                     playerPos.x = newX;
                     playerPos.y = newY;
                     placePlayer(); 
@@ -347,8 +344,8 @@
                 } 
             }
             
-            // 💡 REINÍCIO AUTOMÁTICO: Atraso de 2 segundos (2000ms) para que o jogador leia a mensagem final.
-            setTimeout(resetGame, 2000);
+            // 💡 REINÍCIO AUTOMÁTICO: Agora definido como 500ms (meio segundo)
+            setTimeout(resetGame, 500); 
         }
         
         // --- 6. REINICIALIZAÇÃO DO JOGO (LIMPA) ---
@@ -357,9 +354,8 @@
             hasKey = false;
             
             CURRENT_MAP = copyMap(ORIGINAL_MAP); 
-            messageDisplay.textContent = ''; // Limpa a mensagem final
+            messageDisplay.textContent = ''; 
 
-            // Localiza a posição inicial 'M'
             let startFound = false;
             for (let y = 0; y < mapHeight; y++) {
                 for (let x = 0; x < mapWidth; x++) {
