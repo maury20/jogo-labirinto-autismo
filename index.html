@@ -72,7 +72,7 @@
     <div id="game-info">
         <div id="focus-meter">Foco: <span id="f-value">100</span>%</div>
         <div id="aura-signal">Sinal da Pulseira: <span>🟢 Distante</span></div>
-        <div id="key-status">Chave (K): <span>🔴 Sem chave</span></div>
+        <div id="key-status">Chave (K): <span>🔴 Sem a chave</span></div>
     </div>
     
     <div id="message-display"></div>
@@ -158,7 +158,7 @@
             if (focusValue <= 20) { focusMeterDisplay.style.color = 'red'; } else { focusMeterDisplay.style.color = '#d0021b'; }
             
             if (focusValue === 0) { 
-                messageDisplay.textContent = "❌ DERROTA: O Foco se esgotou! Reiniciando..."; 
+                messageDisplay.textContent = "❌ O Foco se esgotou!"; 
                 gameOver(false, true); 
                 return;
             }
@@ -166,7 +166,7 @@
         }
         
         function updateKeyStatus() { 
-            keyStatusDisplay.textContent = hasKey ? '🟢 com a chave' : '🔴 sem chave';
+            keyStatusDisplay.textContent = hasKey ? '🟢 com a chave' : '🔴 sem a chave';
             keyStatusDisplay.style.color = hasKey ? '#2e8b57' : '#b8860b';
         }
 
@@ -252,7 +252,7 @@
 
             // 1. Bloqueios Fixos (Parede, Mesa, Porta)
             if (nextTile === '#' || nextTile === 'T' || nextTile === 'D') {
-                updateFocus(-10); 
+                updateFocus(-5); 
                 return; 
             }
             
@@ -264,7 +264,7 @@
 
             // 1c. Interação com Cama (B) - Descanso (+15 Foco)
             if (nextTile === 'B') {
-                updateFocus(15); 
+                updateFocus(10); 
                 return;
             }
             
@@ -319,7 +319,7 @@
                 hasKey = true;
                 CURRENT_MAP[newY][newX] = '_'; 
                 updateKeyStatus();
-                messageDisplay.textContent = "Chave (🔑) coletada!";
+                messageDisplay.textContent = "Chave (🔑) Com a chave!";
             }
             
             // 4. Atualizar Posição (Movimento normal)
@@ -344,7 +344,7 @@
                         messageDisplay.textContent = `🎉 VOCÊ ACHOU AURA! Foco: ${focusValue}%.`;
                     } else {
                         // DERROTA POR FOCO BAIXO (MESMO ACHANDO AURA)
-                        messageDisplay.textContent = `⚠️ DERROTA: Encontro falhou. Foco muito baixo (${focusValue}%).`;
+                        messageDisplay.textContent = `⚠️ Não conseguiu achar a AURA. Foco muito baixo (${focusValue}%).`;
                     }
                 } 
             } else {
