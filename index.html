@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AURA: O Labirinto do Encontro (Gamepad)</title>
+    <title>AURA: O Labirinto do Encontro (Gamepad Otimizado)</title>
 
     <style>
         /* [Seção CSS anterior... (mantida inalterada)] */
@@ -67,7 +67,7 @@
     </style>
 </head>
 <body>
-    <h1>AURA: O Labirinto do Encontro (Gamepad)</h1>
+    <h1>AURA: O Labirinto do Encontro (Gamepad Otimizado)</h1>
     
     <div id="game-info">
         <div id="focus-meter">Foco: <span id="f-value">100</span>%</div>
@@ -80,7 +80,9 @@
     <div id="maze-container">
     </div>
     
-    <p class="instructions">Use as setas **OU** o Controle Bluetooth (D-Pad/Analógico Esquerdo). O jogo reinicia automaticamente após 5 segundos.</p>
+    <p class="instructions">
+        Use as setas **OU** o Controle Bluetooth. <span id="gamepad-status">🛑 Desconectado</span>. Pressione qualquer botão do controle para ativá-lo!
+    </p>
 
     <script>
         /* ------------------------------------- */
@@ -138,6 +140,7 @@
         const auraSignalDisplay = document.querySelector('#aura-signal span');
         const keyStatusDisplay = document.querySelector('#key-status span'); 
         const messageDisplay = document.getElementById('message-display'); 
+        const gamepadStatusDisplay = document.getElementById('gamepad-status');
         
         const mapHeight = ORIGINAL_MAP.length; 
         const mapWidth = ORIGINAL_MAP[0].length; 
@@ -148,14 +151,15 @@
         // Estado do Gamepad
         let gamepadIndex = null;
         let lastMoveTime = 0;
-        const MOVE_COOLDOWN = 150; // 150ms de cooldown para evitar movimento muito rápido
+        // Tempo de espera reduzido para melhor jogabilidade
+        const MOVE_COOLDOWN = 120; // 120ms de cooldown
 
         function copyMap(map) {
             return map.map(row => [...row]);
         }
         
-        /* --- Funções de Estado (Update/Draw/Move mantidas) --- */
-        
+        /* --- Funções de Jogo (updateFocus, updateKeyStatus, updateAuraSignal, drawMaze, placePlayer, movePlayer, gameOver, resetGame mantidas) --- */
+
         function updateFocus(change) {
             focusValue = Math.min(100, Math.max(0, focusValue + change));
             focusMeterDisplay.textContent = focusValue;
@@ -166,7 +170,12 @@
                 gameOver(false, true); 
                 return;
             }
-            messageDisplay.textContent = ''; 
+            // Limpa mensagens temporárias (como "Chave coletada!")
+            if (messageDisplay.textContent.startsWith("Porta trancada") || messageDisplay.textContent.startsWith("Chave")) {
+                // Não limpa se for uma mensagem persistente
+            } else {
+                messageDisplay.textContent = ''; 
+            }
         }
         
         function updateKeyStatus() { 
@@ -242,225 +251,8 @@
             }
         }
 
-        /* --- Funções de Jogo --- */
-
         function movePlayer(dx, dy) {
             const newX = playerPos.x + dx;
             const newY = playerPos.y + dy;
             
-            if (newX < 0 || newX >= mapWidth || newY < 0 || newY >= mapHeight) { return; }
-
-            const nextTile = CURRENT_MAP[newY][newX];
-
-            // 1. Bloqueios Fixos (Parede, Mesa, Porta)
-            if (nextTile === '#' || nextTile === 'T' || nextTile === 'D') {
-                updateFocus(-10); 
-                return; 
-            }
-            
-            // 1b. Interação com Sofá (S) - Descanso (+5 Foco)
-            if (nextTile === 'S') {
-                updateFocus(5); 
-                return; 
-            }
-
-            // 1c. Interação com Cama (B) - Descanso (+15 Foco)
-            if (nextTile === 'B') {
-                updateFocus(15); 
-                return;
-            }
-            
-            // 1d. Bloqueio de Porta Trancada (L)
-            if (nextTile === 'L') {
-                if (hasKey) {
-                    hasKey = false; 
-                    
-                    CURRENT_MAP[newY][newX] = '_';
-                    
-                    const unlockedTile = document.querySelector(`[data-x="${newX}"][data-y="${newY}"]`);
-                    if (unlockedTile) {
-                        unlockedTile.classList.remove('locked-door');
-                        unlockedTile.classList.add('path');
-                        unlockedTile.textContent = ''; 
-                    }
-                    
-                    updateKeyStatus();
-                    
-                    playerPos.x = newX;
-                    playerPos.y = newY;
-                    placePlayer(); 
-                    updateFocus(-1); 
-                    updateAuraSignal();
-                    return; 
-                } else {
-                    updateFocus(-10); 
-                    messageDisplay.textContent = "Porta trancada! Precisa da Chave (🔑).";
-                    return;
-                }
-            }
-
-            // 2. Colisão com Recuo Emocional (R) (-20 Foco)
-            if (nextTile === 'R') {
-                updateFocus(-20); 
-                const backX = playerPos.x - (dx * 3);
-                const backY = playerPos.y - (dy * 3);
-                playerPos.x = Math.min(mapWidth - 1, Math.max(0, backX));
-                playerPos.y = Math.min(mapHeight - 1, Math.max(0, backY));
-                placePlayer(); 
-                updateAuraSignal();
-                return; 
-            }
-
-            // 3. Ponto de Calma (G) (+5 Foco)
-            if (nextTile === 'G') { 
-                updateFocus(5); 
-            }
-            
-            // 3b. Coletar Chave (K)
-            if (nextTile === 'K') {
-                hasKey = true;
-                CURRENT_MAP[newY][newX] = '_'; 
-                updateKeyStatus();
-                messageDisplay.textContent = "Chave (🔑) coletada!";
-            }
-            
-            // 4. Atualizar Posição (Movimento normal)
-            playerPos.x = newX;
-            playerPos.y = newY;
-            placePlayer();
-            updateFocus(-1); 
-            updateAuraSignal();
-
-            // 5. Verificação de Condição de Vitória (A = Aura)
-            if (nextTile === 'A') { gameOver(true); } 
-        }
-        
-        function gameOver(victory, focusDefeat = false) {
-            const RESTART_DELAY = 25000; // 25 segundos
-            
-            if (!focusDefeat) {
-                if (victory) {
-                    if (focusValue > 50) { 
-                        // MENSAGEM DE VITÓRIA CUSTOMIZADA
-                        messageDisplay.textContent = `🎉 VOCÊ ACHOU AURA! Foco: ${focusValue}%. Reiniciando em 5 segundos...`;
-                    } else {
-                        // DERROTA POR FOCO BAIXO (MESMO ACHANDO AURA)
-                        messageDisplay.textContent = `⚠️ DERROTA: Encontro falhou. Foco muito baixo (${focusValue}%). Reiniciando em 5 segundos...`;
-                    }
-                } 
-            } else {
-                // DERROTA POR FOCO ZERADO
-                messageDisplay.textContent = `❌ DERROTA: O Foco se esgotou! Reiniciando em 5 segundos...`;
-            }
-            
-            // REINÍCIO AUTOMÁTICO APÓS 5 SEGUNDOS
-            setTimeout(resetGame, RESTART_DELAY); 
-        }
-        
-        function resetGame() {
-            focusValue = 100;
-            hasKey = false;
-            
-            CURRENT_MAP = copyMap(ORIGINAL_MAP); 
-            messageDisplay.textContent = ''; 
-
-            let startFound = false;
-            for (let y = 0; y < mapHeight; y++) {
-                for (let x = 0; x < mapWidth; x++) {
-                    if (CURRENT_MAP[y][x] === 'M') {
-                        playerPos = { x: x, y: y };
-                        startFound = true;
-                        break;
-                    }
-                }
-                if (startFound) break;
-            }
-
-            drawMaze(CURRENT_MAP); 
-            updateKeyStatus(); 
-            updateAuraSignal(); 
-        }
-
-        /* ------------------------------------- */
-        /* --- SUPORTE A GAMEPAD (BLUETOOTH) --- */
-        /* ------------------------------------- */
-
-        function handleGamepadInput() {
-            // Obtém o estado atual de todos os gamepads conectados
-            const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
-            
-            if (gamepadIndex === null) {
-                // Tenta encontrar o primeiro gamepad ativo
-                for (let i = 0; i < gamepads.length; i++) {
-                    if (gamepads[i]) {
-                        gamepadIndex = i;
-                        break;
-                    }
-                }
-            }
-
-            const gamepad = gamepads[gamepadIndex];
-
-            if (gamepad) {
-                const now = performance.now();
-                if (now < lastMoveTime + MOVE_COOLDOWN) {
-                    requestAnimationFrame(handleGamepadInput);
-                    return; // Cooldown ativo
-                }
-
-                let moved = false;
-                let dx = 0;
-                let dy = 0;
-                
-                // 1. Movimento pelo D-Pad (Botões 12, 13, 14, 15 no layout padrão)
-                // Cima (12)
-                if (gamepad.buttons[12] && gamepad.buttons[12].pressed) { dy = -1; moved = true; }
-                // Baixo (13)
-                else if (gamepad.buttons[13] && gamepad.buttons[13].pressed) { dy = 1; moved = true; }
-                // Esquerda (14)
-                else if (gamepad.buttons[14] && gamepad.buttons[14].pressed) { dx = -1; moved = true; }
-                // Direita (15)
-                else if (gamepad.buttons[15] && gamepad.buttons[15].pressed) { dx = 1; moved = true; }
-
-                // 2. Movimento pelo Analógico Esquerdo (Eixos 0 e 1)
-                const AXIS_THRESHOLD = 0.5;
-                const axisX = gamepad.axes[0]; 
-                const axisY = gamepad.axes[1];
-
-                if (!moved) {
-                    if (axisY < -AXIS_THRESHOLD) { // Cima
-                        dy = -1; moved = true;
-                    } else if (axisY > AXIS_THRESHOLD) { // Baixo
-                        dy = 1; moved = true;
-                    } else if (axisX < -AXIS_THRESHOLD) { // Esquerda
-                        dx = -1; moved = true;
-                    } else if (axisX > AXIS_THRESHOLD) { // Direita
-                        dx = 1; moved = true;
-                    }
-                }
-
-                if (moved) {
-                    movePlayer(dx, dy);
-                    lastMoveTime = now;
-                }
-            }
-
-            requestAnimationFrame(handleGamepadInput);
-        }
-        
-        // --- 7. Event Listener para Teclas (Movimentação) ---
-        document.addEventListener('keydown', (e) => {
-            switch (e.key) {
-                case 'ArrowUp': movePlayer(0, -1); break;
-                case 'ArrowDown': movePlayer(0, 1); break;
-                case 'ArrowLeft': movePlayer(-1, 0); break;
-                case 'ArrowRight': movePlayer(1, 0); break;
-            }
-        });
-
-        // Inicia o loop do Gamepad e o Jogo
-        resetGame();
-        handleGamepadInput(); // Começa a checagem contínua do gamepad
-    </script>
-</body>
-</html>
+            if (newX < 0 || newX >= mapWidth || newY
