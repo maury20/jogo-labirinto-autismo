@@ -71,7 +71,7 @@
     
     <div id="game-info">
         <div id="focus-meter">Foco: <span id="f-value">100</span>%</div>
-        <div id="aura-signal">Sinal da Menina: <span>🟢 Distante</span></div>
+        <div id="aura-signal">Sinal da Menina: <span>🔴 Distante</span></div>
         <div id="key-status">Chave (K): <span>🔴 Ausente</span></div>
     </div>
     
@@ -179,9 +179,9 @@
         function updateAuraSignal() {
             const distance = Math.abs(playerPos.x - auraPos.x) + Math.abs(playerPos.y - auraPos.y);
             let signalText;
-            if (distance <= 6) { signalText = '🔴 Perto! (Menina próxima)'; auraSignalDisplay.style.color = '#f5a623'; } 
+            if (distance <= 6) { signalText = '🟢 Perto! (Menina próxima)'; auraSignalDisplay.style.color = '#f5a623'; } 
             else if (distance <= 20) { signalText = '🟡 Médio (Sinal forte)'; auraSignalDisplay.style.color = '#4a90e2'; } 
-            else { signalText = '🟢 Distante (Sinal fraco)'; auraSignalDisplay.style.color = '#7ed321'; }
+            else { signalText = '🔴 Distante (Sinal fraco)'; auraSignalDisplay.style.color = '#7ed321'; }
             auraSignalDisplay.textContent = signalText;
         }
         
