@@ -71,8 +71,8 @@
     
     <div id="game-info">
         <div id="focus-meter">Foco: <span id="f-value">100</span>%</div>
-        <div id="aura-signal">Sinal da Menina: <span>🟢 Distante</span></div>
-        <div id="key-status">Chave (K): <span>🔴 Ausente</span></div>
+        <div id="aura-signal">Sinal da Pulseira: <span>🟢 Distante</span></div>
+        <div id="key-status">Chave (K): <span>🔴 Sem chave</span></div>
     </div>
     
     <div id="message-display"></div>
@@ -166,7 +166,7 @@
         }
         
         function updateKeyStatus() { 
-            keyStatusDisplay.textContent = hasKey ? '🟢 Coletada' : '🔴 Ausente';
+            keyStatusDisplay.textContent = hasKey ? '🟢 com a chave' : '🔴 sem chave';
             keyStatusDisplay.style.color = hasKey ? '#2e8b57' : '#b8860b';
         }
 
@@ -335,16 +335,16 @@
         
         // --- FUNÇÃO GAMEOVER MODIFICADA ---
         function gameOver(victory, focusDefeat = false) {
-            let restartDelay = 5000; // 5 segundos para vitória e derrota por foco
+            let restartDelay = 30000; // 30 segundos para vitória e derrota por foco
             
             if (!focusDefeat) {
                 if (victory) {
                     if (focusValue > 50) { 
                         // MENSAGEM DE VITÓRIA CUSTOMIZADA
-                        messageDisplay.textContent = `🎉 VOCÊ ACHOU AURA! Foco: ${focusValue}%. Reiniciando em 5 segundos...`;
+                        messageDisplay.textContent = `🎉 VOCÊ ACHOU AURA! Foco: ${focusValue}%.`;
                     } else {
                         // DERROTA POR FOCO BAIXO (MESMO ACHANDO AURA)
-                        messageDisplay.textContent = `⚠️ DERROTA: Encontro falhou. Foco muito baixo (${focusValue}%). Reiniciando em 5 segundos...`;
+                        messageDisplay.textContent = `⚠️ DERROTA: Encontro falhou. Foco muito baixo (${focusValue}%).`;
                     }
                 } 
             } else {
