@@ -3,12 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AURA - Nível Hard</title>
+    <title>AURA</title>
 
     <style>
         /* ------------------- CSS ------------------- */
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; flex-direction: column; align-items: center; background-color: #f0f8ff; color: #333; padding: 10px; }
         h1 { color: #d0021b; margin-bottom: 5px; font-size: 1.6em; }
+        
+        /* Novo estilo para o seletor de dificuldade */
+        #difficulty-selector {
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            display: flex;
+            gap: 10px;
+        }
+
+        #difficulty-selector button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+
+        #difficulty-selector button:hover {
+            opacity: 0.8;
+        }
+
+        .btn-easy { background-color: #7ed321; color: white; }
+        .btn-hard { background-color: #f5a623; color: white; }
+        .btn-master { background-color: #4a90e2; color: white; }
+        .btn-impossible { background-color: #d0021b; color: white; }
+        .btn-selected { 
+            border: 3px solid black !important;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
+            transform: scale(1.05);
+        }
+        
         #game-info { display: flex; gap: 40px; margin-bottom: 15px; font-size: 1.1em; padding: 10px 20px; border: 2px solid #ccc; border-radius: 8px; background-color: #fff; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
         #focus-meter { color: #d0021b; font-weight: bold; }
         #aura-signal { font-weight: bold; }
@@ -21,8 +57,18 @@
             font-size: 1.2em;
             text-align: center;
         }
-        /* ATENÇÃO: Mudança aqui para suportar 20x20 */
-        #maze-container { display: grid; grid-template-columns: repeat(20, 30px); grid-template-rows: repeat(20, 30px); border: 4px solid #1a1a1a; box-shadow: 0 0 20px rgba(0, 0, 0, 0.3); background-color: #e6e6e6; }
+        
+        /* Dimensões do Maze adaptadas para 20x20, mas o 18x18 é o padrão inicial */
+        #maze-container { 
+            display: grid; 
+            /* Esta linha será definida dinamicamente no JS, mas 20x20 é o máximo */
+            grid-template-columns: repeat(20, 30px); 
+            grid-template-rows: repeat(20, 30px); 
+            border: 4px solid #1a1a1a; 
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3); 
+            background-color: #e6e6e6; 
+        }
+
         .tile { width: 30px; height: 30px; box-sizing: border-box; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 1.2em; transition: background-color 0.1s; }
 
         .wall-blue { background-color: #4a90e2; border: 1px solid #357ae8; }
@@ -68,7 +114,14 @@
     </style>
 </head>
 <body>
-    <h1>AURA - Nível Impossível</h1>
+    <h1>AURA</h1>
+    
+    <div id="difficulty-selector">
+        <button id="btn-easy" class="btn-easy" data-level="FACIL">Fácil (18x18)</button>
+        <button id="btn-hard" class="btn-hard" data-level="DIFICIL">Difícil (20x20)</button>
+        <button id="btn-master" class="btn-master" data-level="MESTRE">Mestre (20x20)</button>
+        <button id="btn-impossible" class="btn-impossible btn-selected" data-level="IMPOSSIVEL">Impossível (20x20)</button>
+    </div>
     
     <div id="game-info">
         <div id="focus-meter">Foco: <span id="f-value">100</span>%</div>
@@ -102,9 +155,9 @@
         const EMOJI_CALM = '🧘'; 
         const EMOJI_RETREAT = '😠'; 
 
-        // --- 1. Definição dos Mapas de Dificuldade (20x20) ---
+        // --- 1. Definição dos Mapas de Dificuldade ---
         
-        // Mapa Original (18x18) - Mantido para referência, mas não será o principal
+        // Mapa Fácil (18x18)
         const ORIGINAL_MAP = [
             ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'], 
             ['#', '_', 'N', 'K', '_', '_', '_', '_', '_', 'L', '_', '_', '_', '_', '_', '_', '_', '#'], 
@@ -200,27 +253,28 @@
 
         // Agrupa todos os mapas para seleção
         const ALL_MAPS = {
-            'FACIL': ORIGINAL_MAP,
+            'FACIL': EASY_MAP_ORIGINAL,
             'DIFICIL': HARD_MAP_ANXIETY,
             'MESTRE': MASTER_MAP_CRITICISM,
             'IMPOSSIVEL': IMPOSSIBLE_MAP_BURNOUT
         };
 
-        // Seleciona a dificuldade padrão
+        // Estado inicial de dificuldade é o Impossível
         let currentDifficulty = 'IMPOSSIVEL';
-        let CURRENT_MAP = ALL_MAPS[currentDifficulty];
+        let CURRENT_MAP;
         
-        // ATUALIZAÇÃO: Redefinir as dimensões do mapa baseadas no mapa selecionado (20x20)
-        let mapHeight = CURRENT_MAP.length; 
-        let mapWidth = CURRENT_MAP[0].length; 
+        // As dimensões serão definidas em resetGame()
+        let mapHeight = 0; 
+        let mapWidth = 0; 
         
         const ROOM_NAMES_SALA = {
-            '2,1': 'SALA DE ESTAR', '14,5': 'COZINHA', '1,8': 'QUARTO 1', '1,11': 'BANHEIRO', '3,14': 'QUARTO 2', '17,17': 'QUARTO AURA' // Posições adaptadas
+             // Adaptação dos nomes dos cômodos para os mapas maiores
+            '2,1': 'SALA', '14,5': 'COZINHA', '1,8': 'QUARTO 1', '1,11': 'BANHEIRO', '3,14': 'QUARTO 2', '17,17': 'QUARTO AURA' 
         };
         
         let playerPos = { x: 0, y: 0 }; 
         let focusValue = 100;
-        let auraPos = { x: 0, y: 0 }; // Será redefinida ao desenhar o mapa
+        let auraPos = { x: 0, y: 0 }; 
         let hasKey = false; 
         
         // Elementos DOM
@@ -230,6 +284,7 @@
         const keyStatusDisplay = document.querySelector('#key-status span'); 
         const messageDisplay = document.getElementById('message-display'); 
         const gamepadStatusDisplay = document.getElementById('gamepad-status');
+        const difficultyButtons = document.querySelectorAll('#difficulty-selector button'); // Novo seletor de botões
         
         const wallColors = ['wall-blue', 'wall-yellow', 'wall-red', 'wall-green'];
         let currentColorIndex = 0; 
@@ -237,7 +292,7 @@
         // Estado do Gamepad
         let gamepadIndex = null;
         let lastMoveTime = 0;
-        const MOVE_COOLDOWN = 120; // Cooldown para movimentos (Gamepads e Teclado Rápido)
+        const MOVE_COOLDOWN = 120;
 
         function copyMap(map) {
             return map.map(row => [...row]);
@@ -273,7 +328,7 @@
         
         function drawMaze(map) {
             mazeContainer.innerHTML = '';
-            // Usa as dimensões atualizadas
+            // Define as colunas e linhas do Grid com base no mapa atual (18x18 ou 20x20)
             mazeContainer.style.gridTemplateColumns = `repeat(${mapWidth}, 30px)`;
             mazeContainer.style.gridTemplateRows = `repeat(${mapHeight}, 30px)`;
             
@@ -366,7 +421,6 @@
                     
                     CURRENT_MAP[newY][newX] = '_';
                     
-                    // Atualiza a representação visual da porta
                     const unlockedTile = document.querySelector(`[data-x="${newX}"][data-y="${newY}"]`);
                     if (unlockedTile) {
                         unlockedTile.classList.remove('locked-door');
@@ -395,7 +449,6 @@
                 const backX = playerPos.x - (dx * 3);
                 const backY = playerPos.y - (dy * 3);
                 
-                // Teleporta o jogador para 3 casas atrás (ou no limite do mapa)
                 playerPos.x = Math.min(mapWidth - 1, Math.max(0, backX));
                 playerPos.y = Math.min(mapHeight - 1, Math.max(0, backY));
                 
@@ -415,7 +468,7 @@
                 hasKey = true;
                 CURRENT_MAP[newY][newX] = '_'; // Remove a chave do mapa
                 updateKeyStatus();
-                messageDisplay.textContent = "Chave (🔑) com a chave!";
+                messageDisplay.textContent = "Chave (🔑) obtida!";
             }
             
             // 4. Atualizar Posição (Movimento normal)
@@ -430,33 +483,53 @@
         }
         
         function gameOver(victory, focusDefeat = false) {
-            const RESTART_DELAY = 5000; // 5 segundos
+            const RESTART_DELAY = 5000;
             
             if (!focusDefeat) {
                 if (victory) {
                     if (focusValue > 10) { 
-                        messageDisplay.textContent = `VOCÊ ACHOU AURA! Foco: ${focusValue}%. Reiniciando em 5 segundos...`;
+                        messageDisplay.textContent = `VITÓRIA! Você achou Aura com ${focusValue}% de Foco. Reiniciando em 5 segundos...`;
                     } else {
-                        messageDisplay.textContent = ` Encontro falhou. Foco muito baixo (${focusValue}%). Reiniciando em 5 segundos...`;
+                        messageDisplay.textContent = `Encontro falhou. Foco muito baixo (${focusValue}%). Reiniciando em 5 segundos...`;
                     }
                 } 
             }
             
-            setTimeout(resetGame, RESTART_DELAY); 
+            // Desativa temporariamente o movimento
+            document.removeEventListener('keydown', handleKeydown);
+            
+            setTimeout(function() {
+                resetGame(currentDifficulty); // Usa a dificuldade atual
+                document.addEventListener('keydown', handleKeydown); // Reativa o movimento
+            }, RESTART_DELAY); 
         }
         
-        function resetGame() {
+        // --- NOVO: Função de troca de nível ---
+        function setDifficulty(level) {
+            currentDifficulty = level;
+            // Atualiza a aparência dos botões
+            difficultyButtons.forEach(btn => {
+                btn.classList.remove('btn-selected');
+                if (btn.dataset.level === level) {
+                    btn.classList.add('btn-selected');
+                }
+            });
+            resetGame(level);
+        }
+
+        function resetGame(level = currentDifficulty) {
             focusValue = 100;
             hasKey = false;
             
-            // Re-seleciona o mapa (neste caso, o IMPOSSÍVEL)
-            CURRENT_MAP = copyMap(ALL_MAPS[currentDifficulty]); 
+            // Seleciona o mapa e copia
+            const selectedMap = ALL_MAPS[level];
+            CURRENT_MAP = copyMap(selectedMap); 
             
-            // ATUALIZAÇÃO ESSENCIAL: Redefine as dimensões do labirinto
+            // Redefine as dimensões do labirinto baseado no mapa selecionado (18x18 ou 20x20)
             mapHeight = CURRENT_MAP.length;
             mapWidth = CURRENT_MAP[0].length;
             
-            messageDisplay.textContent = ''; 
+            messageDisplay.textContent = `Iniciando jogo: ${level}`; 
 
             // Encontra a posição inicial 'M'
             let startFound = false;
@@ -480,97 +553,8 @@
         /* --- LÓGICA DE CONTROLE (TECLADO & GAMEPAD) --- */
         /* ------------------------------------------- */
         
-        function updateGamepadStatus(connected, name = '') {
-            if (connected) {
-                gamepadStatusDisplay.textContent = `✅ Conectado: ${name.substring(0, 30)}...`; // Limita o nome
-                gamepadStatusDisplay.style.color = '#2e8b57';
-            } else {
-                gamepadStatusDisplay.textContent = `🛑 Desconectado`;
-                gamepadStatusDisplay.style.color = '#d0021b';
-            }
-        }
-
-        // Eventos de conexão e desconexão
-        window.addEventListener("gamepadconnected", (e) => {
-            gamepadIndex = e.gamepad.index;
-            updateGamepadStatus(true, e.gamepad.id);
-        });
-
-        window.addEventListener("gamepaddisconnected", (e) => {
-            if (gamepadIndex === e.gamepad.index) {
-                gamepadIndex = null;
-                updateGamepadStatus(false);
-            }
-        });
-
-
-        function handleGamepadInput() {
-            const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
-            const gamepad = gamepads[gamepadIndex];
-
-            if (gamepad) {
-                const now = performance.now();
-                
-                if (focusValue === 0) {
-                    requestAnimationFrame(handleGamepadInput);
-                    return;
-                }
-
-                if (now < lastMoveTime + MOVE_COOLDOWN) {
-                    requestAnimationFrame(handleGamepadInput);
-                    return; 
-                }
-
-                let moved = false;
-                let dx = 0;
-                let dy = 0;
-                
-                const buttons = gamepad.buttons;
-
-                // 1. Movimento pelo D-Pad (Botões 12, 13, 14, 15 no padrão)
-                if (buttons[12] && buttons[12].pressed) { dy = -1; moved = true; } // Cima
-                else if (buttons[13] && buttons[13].pressed) { dy = 1; moved = true; } // Baixo
-                else if (buttons[14] && buttons[14].pressed) { dx = -1; moved = true; } // Esquerda
-                else if (buttons[15] && buttons[15].pressed) { dx = 1; moved = true; } // Direita
-
-                // 2. Movimento pelo Analógico Esquerdo (Eixos 0 e 1)
-                const AXIS_THRESHOLD = 0.4; 
-                const axisX = gamepad.axes[0] || 0; 
-                const axisY = gamepad.axes[1] || 0;
-                
-                if (!moved) {
-                    if (axisY < -AXIS_THRESHOLD) { // Cima
-                        dy = -1; moved = true;
-                    } else if (axisY > AXIS_THRESHOLD) { // Baixo
-                        dy = 1; moved = true;
-                    } else if (axisX < -AXIS_THRESHOLD) { // Esquerda
-                        dx = -1; moved = true;
-                    } else if (axisX > AXIS_THRESHOLD) { // Direita
-                        dx = 1; moved = true;
-                    }
-                }
-
-                if (moved) {
-                    movePlayer(dx, dy);
-                    lastMoveTime = now;
-                }
-            } else {
-                // Tenta encontrar um gamepad caso não tenha sido detectado pelo evento
-                for (let i = 0; i < gamepads.length; i++) {
-                    if (gamepads[i]) {
-                        gamepadIndex = i;
-                        updateGamepadStatus(true, gamepads[i].id);
-                        break;
-                    }
-                }
-            }
-
-            // Loop principal de checagem do Gamepad
-            requestAnimationFrame(handleGamepadInput);
-        }
-        
-        // --- Event Listener para Teclas (Priorizando o bloqueio de scroll) ---
-        document.addEventListener('keydown', (e) => {
+        // Refatorado o listener de teclado para que possa ser removido/adicionado
+        function handleKeydown(e) {
             let dx = 0;
             let dy = 0;
             let validKey = false;
@@ -587,9 +571,8 @@
             }
 
             if (validKey) {
-                e.preventDefault(); // *** ESSENCIAL: Impede o scroll da página ***
+                e.preventDefault(); 
                 
-                // Aplica o cooldown também ao teclado 
                 const now = performance.now();
                 if (now < lastMoveTime + MOVE_COOLDOWN) {
                     return; 
@@ -598,10 +581,89 @@
                 movePlayer(dx, dy);
                 lastMoveTime = now;
             }
+        }
+        
+        document.addEventListener('keydown', handleKeydown); // Adiciona o listener de teclado
+
+        // Gamepad logic (mantida)
+        function updateGamepadStatus(connected, name = '') {
+            if (connected) {
+                gamepadStatusDisplay.textContent = `✅ Conectado: ${name.substring(0, 30)}...`; 
+                gamepadStatusDisplay.style.color = '#2e8b57';
+            } else {
+                gamepadStatusDisplay.textContent = `🛑 Desconectado`;
+                gamepadStatusDisplay.style.color = '#d0021b';
+            }
+        }
+
+        window.addEventListener("gamepadconnected", (e) => {
+            gamepadIndex = e.gamepad.index;
+            updateGamepadStatus(true, e.gamepad.id);
         });
 
-        // Inicia o jogo e o loop de checagem do Gamepad
-        resetGame();
+        window.addEventListener("gamepaddisconnected", (e) => {
+            if (gamepadIndex === e.gamepad.index) {
+                gamepadIndex = null;
+                updateGamepadStatus(false);
+            }
+        });
+
+        function handleGamepadInput() {
+            const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+            const gamepad = gamepads[gamepadIndex];
+
+            if (gamepad && focusValue > 0) { // Verifica o foco
+                const now = performance.now();
+                
+                if (now < lastMoveTime + MOVE_COOLDOWN) {
+                    requestAnimationFrame(handleGamepadInput);
+                    return; 
+                }
+
+                let moved = false;
+                let dx = 0;
+                let dy = 0;
+                
+                const buttons = gamepad.buttons;
+
+                // D-Pad e Analógico
+                const AXIS_THRESHOLD = 0.4; 
+                const axisX = gamepad.axes[0] || 0; 
+                const axisY = gamepad.axes[1] || 0;
+                
+                if (buttons[12]?.pressed || axisY < -AXIS_THRESHOLD) { dy = -1; moved = true; } 
+                else if (buttons[13]?.pressed || axisY > AXIS_THRESHOLD) { dy = 1; moved = true; } 
+                else if (buttons[14]?.pressed || axisX < -AXIS_THRESHOLD) { dx = -1; moved = true; } 
+                else if (buttons[15]?.pressed || axisX > AXIS_THRESHOLD) { dx = 1; moved = true; } 
+
+                if (moved) {
+                    movePlayer(dx, dy);
+                    lastMoveTime = now;
+                }
+            } else if (!gamepad) {
+                // Tenta reconectar o gamepad
+                for (let i = 0; i < gamepads.length; i++) {
+                    if (gamepads[i]) {
+                        gamepadIndex = i;
+                        updateGamepadStatus(true, gamepads[i].id);
+                        break;
+                    }
+                }
+            }
+
+            requestAnimationFrame(handleGamepadInput);
+        }
+        
+        // --- NOVO: Listener para os botões de dificuldade ---
+        difficultyButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const level = button.getAttribute('data-level');
+                setDifficulty(level);
+            });
+        });
+
+        // Inicia o jogo no nível padrão (Impossível, conforme o HTML inicial)
+        setDifficulty('IMPOSSIVEL');
         handleGamepadInput(); 
     </script>
 </body>
