@@ -13,6 +13,14 @@
         #focus-meter { color: #d0021b; font-weight: bold; }
         #aura-signal { font-weight: bold; }
         #key-status { font-weight: bold; color: #b8860b; } 
+        #message-display { 
+            height: 30px; 
+            color: #d0021b; 
+            font-weight: bold; 
+            margin-bottom: 10px; 
+            font-size: 1.2em;
+            text-align: center;
+        }
         #maze-container { display: grid; grid-template-columns: repeat(18, 30px); grid-template-rows: repeat(18, 30px); border: 4px solid #1a1a1a; box-shadow: 0 0 20px rgba(0, 0, 0, 0.3); background-color: #e6e6e6; }
         .tile { width: 30px; height: 30px; box-sizing: border-box; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 1.2em; transition: background-color 0.1s; }
 
@@ -66,6 +74,8 @@
         <div id="aura-signal">Sinal da Menina: <span>🟢 Distante</span></div>
         <div id="key-status">Chave (K): <span>🔴 Ausente</span></div>
     </div>
+    
+    <div id="message-display"></div>
 
     <div id="maze-container">
     </div>
@@ -123,10 +133,12 @@
         let auraPos = { x: 17, y: 16 }; 
         let hasKey = false; 
         
+        // Elementos DOM
         const mazeContainer = document.getElementById('maze-container');
         const focusMeterDisplay = document.getElementById('f-value');
         const auraSignalDisplay = document.querySelector('#aura-signal span');
         const keyStatusDisplay = document.querySelector('#key-status span'); 
+        const messageDisplay = document.getElementById('message-display'); // Novo elemento
         
         const mapHeight = ORIGINAL_MAP.length; 
         const mapWidth = ORIGINAL_MAP[0].length; 
@@ -146,10 +158,11 @@
             if (focusValue <= 20) { focusMeterDisplay.style.color = 'red'; } else { focusMeterDisplay.style.color = '#d0021b'; }
             
             if (focusValue === 0) { 
-                alert("O Foco se esgotou! Reinicie a busca."); 
+                messageDisplay.textContent = "❌ DERROTA: O Foco se esgotou! Reiniciando..."; 
                 gameOver(false, true); 
                 return;
             }
+            messageDisplay.textContent = ''; // Limpa mensagens de aviso
         }
         
         function updateKeyStatus() { 
@@ -261,10 +274,9 @@
                 if (hasKey) {
                     hasKey = false; 
                     
-                    // 1. Limpa o tile 'L' do mapa lógico
                     CURRENT_MAP[newY][newX] = '_';
                     
-                    // 2. Atualiza o HTML do tile L para caminho livre
+                    // Atualiza o HTML do tile L para caminho livre
                     const unlockedTile = document.querySelector(`[data-x="${newX}"][data-y="${newY}"]`);
                     if (unlockedTile) {
                         unlockedTile.classList.remove('locked-door');
@@ -283,7 +295,7 @@
                     return; 
                 } else {
                     updateFocus(-10); 
-                    alert("Esta porta está trancada! Você precisa da Chave (🔑) para passar.");
+                    messageDisplay.textContent = "Porta trancada! Precisa da Chave (🔑).";
                     return;
                 }
             }
@@ -310,6 +322,7 @@
                 hasKey = true;
                 CURRENT_MAP[newY][newX] = '_'; 
                 updateKeyStatus();
+                messageDisplay.textContent = "Chave (🔑) coletada!";
             }
             
             // 4. Atualizar Posição (Movimento normal)
@@ -324,19 +337,18 @@
         }
         
         function gameOver(victory, focusDefeat = false) {
-            // Se já houve o alert de Foco esgotado, apenas reinicia.
             if (!focusDefeat) {
                 if (victory) {
                     if (focusValue > 50) { 
-                        alert(`VITÓRIA! 🎉 Você encontrou a Menina (Aura) com Foco de ${focusValue}%. Missão Cumprida!`);
+                        messageDisplay.textContent = `🎉 VITÓRIA: Encontro com sucesso! Foco: ${focusValue}%. Reiniciando...`;
                     } else {
-                        alert(`Você encontrou a Menina (Aura), mas seu Foco (${focusValue}%) está muito baixo (abaixo de 50%). Você precisa de mais Calma (🧘) para se conectar.`);
+                        messageDisplay.textContent = `⚠️ DERROTA: Encontro falhou. Foco muito baixo (${focusValue}%). Reiniciando...`;
                     }
                 } 
             }
             
-            // Garante que o reset ocorra após o alert ser fechado.
-            setTimeout(resetGame, 100);
+            // 💡 REINÍCIO AUTOMÁTICO: Atraso de 2 segundos (2000ms) para que o jogador leia a mensagem final.
+            setTimeout(resetGame, 2000);
         }
         
         // --- 6. REINICIALIZAÇÃO DO JOGO (LIMPA) ---
@@ -344,8 +356,8 @@
             focusValue = 100;
             hasKey = false;
             
-            // Carrega uma cópia limpa do mapa
             CURRENT_MAP = copyMap(ORIGINAL_MAP); 
+            messageDisplay.textContent = ''; // Limpa a mensagem final
 
             // Localiza a posição inicial 'M'
             let startFound = false;
