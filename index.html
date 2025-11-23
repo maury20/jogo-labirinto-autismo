@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AURA: O Labirinto do Encontro - Multi-Nível</title>
+    <title>AURA: O Labirinto do Encontro - Multi-Nível (Clique e Teclas)</title>
 
     <style>
-        /* ------------------- CSS OMITIDO PARA BREVIDADE ------------------- */
+        /* ------------------- CSS (Mantido) ------------------- */
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; flex-direction: column; align-items: center; background-color: #f0f8ff; color: #333; padding: 10px; }
         h1 { color: #d0021b; margin-bottom: 5px; font-size: 1.6em; }
         
@@ -66,7 +66,6 @@
             border: 4px solid #1a1a1a; 
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.3); 
             background-color: #e6e6e6; 
-            /* Tamanho ajustado dinamicamente via JS */
         }
         .tile { 
             width: 30px; 
@@ -78,6 +77,7 @@
             font-weight: bold; 
             font-size: 1.2em; 
             transition: background-color 0.1s; 
+            cursor: pointer; /* Adiciona cursor de clique */
         }
 
         /* Paredes e Itens */
@@ -91,8 +91,7 @@
         .key { background-color: #ffd700; border: 1px solid #ccab00; } 
         .sofa { background-color: #8B4513; border: 1px solid #69340f; } 
         .bed { background-color: #b0c4de; border: 1px solid #9fb3cc; } 
-        .table { background-color: #a0522d; border: 1px solid #733a1e; } 
-
+        
         .retreat { background-color: #8B0000; color: white; } 
         .calm { background-color: #2e8b57; color: white; } 
 
@@ -130,7 +129,7 @@
     <div id="maze-container">
         </div>
     
-    <p class="instructions">Use as setas. **Objetivo:** Coletar a **Chave (🔑)** para abrir a porta e encontrar a Menina com **Foco > 50%**.</p>
+    <p class="instructions">Use as **setas** do teclado ou **clique** em um bloco adjacente para se mover. Objetivo: Foco > 50%.</p>
 
     <script>
         // -------------------------------------
@@ -185,7 +184,7 @@
             ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '_', '_', '_', '_', '_', '_', 'A'], // L16 (A: Aura)
             ['#', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '#'], // L17
             ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#']  // L18
-        ]
+        ];
 
         // --- 2. Configurações de Dificuldade ---
         const DIFFICULTIES = {
@@ -300,6 +299,9 @@
                     tile.classList.add('tile');
                     tile.dataset.x = x;
                     tile.dataset.y = y;
+                    
+                    // Adiciona o listener de clique AQUI
+                    tile.addEventListener('click', movePlayerOnClick);
 
                     const baseTileType = CURRENT_MAP[y][x]; 
 
@@ -335,6 +337,7 @@
         }
 
         function placePlayer() {
+            // ... (Função placePlayer mantém a lógica anterior) ...
             const oldPlayerTile = document.querySelector('.player');
             if (oldPlayerTile) {
                 oldPlayerTile.classList.remove('player');
@@ -345,7 +348,6 @@
                 
                 const tileType = CURRENT_MAP[y][x];
                 
-                // Restaura o emoji
                 if (tileType === 'S') { oldPlayerTile.textContent = EMOJI_SOFA; }
                 else if (tileType === 'B') { oldPlayerTile.textContent = EMOJI_BED; }
                 else if (tileType === 'D') { oldPlayerTile.textContent = EMOJI_DOOR; }
@@ -362,8 +364,24 @@
                 newPlayerTile.textContent = EMOJI_PLAYER; 
             }
         }
+        
+        // --- NOVO: Lógica de Movimento por Clique ---
+        function movePlayerOnClick(event) {
+            const targetX = parseInt(event.currentTarget.dataset.x);
+            const targetY = parseInt(event.currentTarget.dataset.y);
+            
+            const dx = targetX - playerPos.x;
+            const dy = targetY - playerPos.y;
 
-        // --- 5. Lógica de Movimento e Interações ---
+            // Checa se o clique é em um tile adjacente (distância máxima de 1 em X e 1 em Y, mas não na diagonal)
+            if ((Math.abs(dx) === 1 && dy === 0) || (Math.abs(dy) === 1 && dx === 0)) {
+                // Se for adjacente, chama a função de movimento principal
+                movePlayer(dx, dy);
+            }
+            // Ignora cliques no próprio jogador ou em tiles distantes/diagonais.
+        }
+
+        // --- 5. Lógica de Movimento Principal (movePlayer mantém a lógica anterior) ---
         function movePlayer(dx, dy) {
             const newX = playerPos.x + dx;
             const newY = playerPos.y + dy;
@@ -374,7 +392,7 @@
 
             // 1. Bloqueios Fixos (S, B, #, D)
             if (nextTile === 'S' || nextTile === 'B' || nextTile === '#' || nextTile === 'D') {
-                updateFocus(gameSettings.hitWallCost); // Custo de colisão varia no DIFÍCIL
+                updateFocus(gameSettings.hitWallCost); 
                 return; 
             }
             
@@ -400,8 +418,8 @@
 
             // 2. Colisão com Recuo Emocional (R)
             if (nextTile === 'R') {
-                updateFocus(gameSettings.retreatCost); // Custo do Recuo varia
-                const backX = playerPos.x - (dx * gameSettings.retreatDistance); // Distância do recuo varia
+                updateFocus(gameSettings.retreatCost); 
+                const backX = playerPos.x - (dx * gameSettings.retreatDistance); 
                 const backY = playerPos.y - (dy * gameSettings.retreatDistance);
                 playerPos.x = Math.min(mapWidth - 1, Math.max(0, backX));
                 playerPos.y = Math.min(mapHeight - 1, Math.max(0, backY));
@@ -410,7 +428,7 @@
             }
 
             // 3. Ponto de Calma (G)
-            if (nextTile === 'G') { updateFocus(gameSettings.calmGain); } // Ganho de Calma varia
+            if (nextTile === 'G') { updateFocus(gameSettings.calmGain); } 
             
             // 3b. Coletar Chave (K)
             if (nextTile === 'K') {
@@ -424,7 +442,7 @@
             playerPos.x = newX;
             playerPos.y = newY;
             placePlayer();
-            updateFocus(gameSettings.moveCost); // Custo de movimento varia
+            updateFocus(gameSettings.moveCost); 
             updateAuraSignal();
 
             // 5. Verificação de Condição de Vitória (A = Aura)
@@ -444,12 +462,10 @@
         
         // --- 7. Função de Reinício do Jogo ---
         window.resetGame = function() {
-             // Redefine o mapa com uma cópia limpa do mapa do nível atual
              CURRENT_MAP = JSON.parse(JSON.stringify(gameSettings.map)); 
              focusValue = gameSettings.startFocus;
              hasKey = false;
              
-             // Encontra a posição inicial 'M' no mapa atual para redefinir o jogador
              for(let y = 0; y < CURRENT_MAP.length; y++) {
                  for(let x = 0; x < CURRENT_MAP[y].length; x++) {
                      if (CURRENT_MAP[y][x] === 'M') {
@@ -477,6 +493,9 @@
     </script>
 </body>
 </html>
+
+
+
 
 
 
