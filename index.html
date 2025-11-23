@@ -333,19 +333,27 @@
             if (nextTile === 'A') { gameOver(true); } 
         }
         
+        // --- FUNÇÃO GAMEOVER MODIFICADA ---
         function gameOver(victory, focusDefeat = false) {
+            let restartDelay = 5000; // 5 segundos para vitória e derrota por foco
+            
             if (!focusDefeat) {
                 if (victory) {
                     if (focusValue > 50) { 
-                        messageDisplay.textContent = `🎉 VITÓRIA: Encontro com sucesso! Foco: ${focusValue}%. Reiniciando...`;
+                        // MENSAGEM DE VITÓRIA CUSTOMIZADA
+                        messageDisplay.textContent = `🎉 VOCÊ ACHOU AURA! Foco: ${focusValue}%. Reiniciando em 5 segundos...`;
                     } else {
-                        messageDisplay.textContent = `⚠️ DERROTA: Encontro falhou. Foco muito baixo (${focusValue}%). Reiniciando...`;
+                        // DERROTA POR FOCO BAIXO (MESMO ACHANDO AURA)
+                        messageDisplay.textContent = `⚠️ DERROTA: Encontro falhou. Foco muito baixo (${focusValue}%). Reiniciando em 5 segundos...`;
                     }
                 } 
+            } else {
+                // DERROTA POR FOCO ZERADO (A mensagem já foi definida em updateFocus)
+                restartDelay = 5000;
             }
             
-            // 💡 REINÍCIO AUTOMÁTICO: Agora definido como 500ms (meio segundo)
-            setTimeout(resetGame, 500); 
+            // REINÍCIO AUTOMÁTICO APÓS 5 SEGUNDOS
+            setTimeout(resetGame, restartDelay); 
         }
         
         // --- 6. REINICIALIZAÇÃO DO JOGO (LIMPA) ---
