@@ -3,33 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AURA: O Labirinto do Encontro - Multi-Nível (Clique e Teclas)</title>
- 
+    <title>AURA: O Labirinto do Encontro - Nível EXTREMO (Foco)</title>
+
     <style>
-        /* ------------------- CSS (Mantido) ------------------- */
+        /* ------------------------------------- */
+        /* CÓDIGO CSS (Estilo e Design do Labirinto) */
+        /* ------------------------------------- */
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; flex-direction: column; align-items: center; background-color: #f0f8ff; color: #333; padding: 10px; }
         h1 { color: #d0021b; margin-bottom: 5px; font-size: 1.6em; }
-        
-        /* Contêiner de Dificuldade e Botões */
-        #difficulty-selector { margin-bottom: 15px; }
-        #difficulty-selector button {
-            padding: 8px 15px;
-            font-size: 1em;
-            font-weight: bold;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            margin: 0 5px;
-            transition: opacity 0.2s, background-color 0.2s;
-        }
-        #difficulty-selector button.active { opacity: 1; border: 3px solid #1a1a1a; }
-        #difficulty-selector button:not(.active):hover { opacity: 0.8; }
-
-        .btn-facil { background-color: #2e8b57; }
-        .btn-medio { background-color: #ffc107; color: #333 !important; }
-        .btn-dificil { background-color: #d0021b; }
-
         #game-info { 
             display: flex; 
             gap: 20px; 
@@ -49,7 +30,7 @@
         
         #reset-button {
             padding: 8px 15px;
-            font-size: 1em;
+            font-size: 1em; 
             font-weight: bold;
             color: white;
             background-color: #4a90e2; 
@@ -59,26 +40,12 @@
             transition: background-color 0.2s;
             margin-top: 10px;
         }
-        #reset-button:hover { background-color: #357ae8; }
+        #reset-button:hover {
+            background-color: #357ae8;
+        }
         
-        #maze-container { 
-            display: grid; 
-            border: 4px solid #1a1a1a; 
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3); 
-            background-color: #e6e6e6; 
-        }
-        .tile { 
-            width: 30px; 
-            height: 30px; 
-            box-sizing: border-box; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            font-weight: bold; 
-            font-size: 1.2em; 
-            transition: background-color 0.1s; 
-            cursor: pointer; /* Adiciona cursor de clique */
-        }
+        #maze-container { display: grid; grid-template-columns: repeat(18, 30px); grid-template-rows: repeat(18, 30px); border: 4px solid #1a1a1a; box-shadow: 0 0 20px rgba(0, 0, 0, 0.3); background-color: #e6e6e6; }
+        .tile { width: 30px; height: 30px; box-sizing: border-box; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 1.2em; transition: background-color 0.1s; }
 
         /* Paredes e Itens */
         .wall-blue { background-color: #4a90e2; border: 1px solid #357ae8; }
@@ -91,7 +58,8 @@
         .key { background-color: #ffd700; border: 1px solid #ccab00; } 
         .sofa { background-color: #8B4513; border: 1px solid #69340f; } 
         .bed { background-color: #b0c4de; border: 1px solid #9fb3cc; } 
-        
+        .table { background-color: #a0522d; border: 1px solid #733a1e; } 
+
         .retreat { background-color: #8B0000; color: white; } 
         .calm { background-color: #2e8b57; color: white; } 
 
@@ -110,35 +78,30 @@
     </style>
 </head>
 <body>
-    <h1 id="game-title">AURA: O Labirinto do Encontro - Nível MÉDIO</h1>
+    <h1>AURA: O Labirinto do Encontro - Nível EXTREMO 🤯</h1>
     
-    <div id="difficulty-selector">
-        <button class="btn-facil" id="btn-facil" onclick="setDifficulty('FACIL')">FÁCIL</button>
-        <button class="btn-medio active" id="btn-medio" onclick="setDifficulty('MEDIO')">MÉDIO</button>
-        <button class="btn-dificil" id="btn-dificil" onclick="setDifficulty('DIFICIL')">DIFÍCIL</button>
-    </div>
-
     <div id="game-info">
         <div id="focus-meter">Foco: <span id="f-value">100</span>%</div>
         <div id="aura-signal">Sinal da Menina: <span>🟢 Distante</span></div>
         <div id="key-status">Chave (🔑): <span>🔴 Ausente</span></div>
-    </div>
+        </div>
     
     <button id="reset-button" onclick="resetGame()">🔁 Reiniciar Busca</button>
 
     <div id="maze-container">
         </div>
     
-    <p class="instructions">Use as **setas** do teclado ou **clique** em um bloco adjacente para se mover. Objetivo: Foco > 50%.</p>
+    <p class="instructions">Use as setas. **Objetivo:** Coletar a **Chave (🔑)** para abrir a porta e encontrar a Menina com **Foco > 50%**.</p>
 
     <script>
-        // -------------------------------------
-        // CÓDIGO JAVASCRIPT (Lógica do Jogo)
-        // -------------------------------------
+        /* ------------------------------------- */
+        /* CÓDIGO JAVASCRIPT (Lógica do Jogo) */
+        /* ------------------------------------- */
 
         // --- EMOJIS E ITENS ---
         const EMOJI_SOFA = '🛋️';
         const EMOJI_BED = '🛌';
+        const EMOJI_TABLE = '🍽️';
         const EMOJI_DOOR = '🚪';
         const EMOJI_LOCKED_DOOR = '🔒'; 
         const EMOJI_KEY = '🔑'; 
@@ -147,23 +110,8 @@
         const EMOJI_CALM = '🧘'; 
         const EMOJI_RETREAT = '😠'; 
 
-        // --- 1. Definição dos Mapas ---
-        // Mapa FÁCIL (11x12 simplificado)
-        const EASY_MAP = [
-            ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'], // L1
-            ['#', 'M', '_', '_', '_', 'D', '_', '_', '_', '_', '_', '#'], // L2 (M: Start)
-            ['#', '_', '#', '#', '#', '#', '#', '_', '#', '#', '_', '#'], // L3
-            ['#', '_', '#', 'B', 'S', '_', '#', '_', 'D', '#', '_', '#'], // L4 (B, S: Furniture, D: Door)
-            ['#', 'D', '#', '#', '#', '_', 'L', '_', '#', '#', '_', '#'], // L5 (D: Door, L: Locked Door)
-            ['#', '_', '_', '_', 'R', '_', '_', '_', '_', '_', '_', '#'], // L6 (R: Retreat)
-            ['#', '#', '#', '#', '#', '_', '#', '#', '#', '#', '#', '#'], // L7
-            ['#', 'G', '_', '_', '_', '_', '_', '_', '_', '#', '_', '#'], // L8 (G: Calm)
-            ['#', '#', '#', '#', '#', '#', '#', '#', '_', '#', 'A', '#'], // L9 (A: Aura)
-            ['#', 'K', '_', '_', '_', '_', '_', '_', '_', '#', '_', '#'], // L10 (K: Key)
-            ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#']  // L11
-        ];
-
-        // Mapa MÉDIO/DIFÍCIL (18x18, o mapa original)
+        // --- 1. Definição do Mapa EXTREMO (18x18) ---
+        // L: Porta Trancada, K: Chave. O T (Talisman) foi removido e substituído por caminho ('_').
         const CURRENT_MAP = [
             // C1 C2 C3 C4 C5 C6 C7 C8 C9 C10 C11 C12 C13 C14 C15 C16 C17 C18
             ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'], // L1
@@ -186,53 +134,17 @@
             ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#']  // L18
         ];
 
-        // --- 2. Configurações de Dificuldade ---
-        const DIFFICULTIES = {
-            'FACIL': {
-                map: EASY_MAP,
-                startFocus: 150,
-                moveCost: -0.5,
-                hitWallCost: -10,
-                retreatCost: -10,
-                retreatDistance: 1,
-                calmGain: 10,
-                name: "Nível FÁCIL"
-            },
-            'MEDIO': {
-                map: HARD_MAP,
-                startFocus: 100,
-                moveCost: -1,
-                hitWallCost: -10,
-                retreatCost: -15,
-                retreatDistance: 2,
-                calmGain: 5,
-                name: "Nível MÉDIO"
-            },
-            'DIFICIL': {
-                map: HARD_MAP,
-                startFocus: 70,
-                moveCost: -2,
-                hitWallCost: -15,
-                retreatCost: -25,
-                retreatDistance: 3,
-                calmGain: 3,
-                name: "Nível DIFÍCIL"
-            }
-        };
-
+        let CURRENT_MAP = JSON.parse(JSON.stringify(INITIAL_MAP)); 
+        
         // Mapeamento dos nomes dos cômodos (Omitido por brevidade)
         const ROOM_NAMES_SALA = {
             '2,1': 'SALA DE ESTAR', '14,5': 'COZINHA', '1,8': 'QUARTO 1', '1,11': 'BANHEIRO', '3,14': 'QUARTO 2', '14,16': 'QUARTO AURA'
         };
-
-        // --- VARIÁVEIS DE ESTADO GLOBAL ---
-        let currentLevel = 'MEDIO'; 
-        let gameSettings = DIFFICULTIES[currentLevel];
-        let CURRENT_MAP = JSON.parse(JSON.stringify(gameSettings.map)); 
         
+        // --- VARIÁVEIS DE ESTADO DO JOGO ---
         let playerPos = { x: 0, y: 0 }; 
-        let focusValue = gameSettings.startFocus;
-        let auraPos = { x: 0, y: 0 }; 
+        let focusValue = 100;
+        let auraPos = { x: 17, y: 16 }; 
         let hasKey = false; 
         
         // Elementos DOM
@@ -240,33 +152,17 @@
         const focusMeterDisplay = document.getElementById('f-value');
         const auraSignalDisplay = document.querySelector('#aura-signal span');
         const keyStatusDisplay = document.querySelector('#key-status span');
-        const gameTitle = document.getElementById('game-title');
         
-        let mapHeight = 0; 
-        let mapWidth = 0; 
+        const mapHeight = CURRENT_MAP.length; 
+        const mapWidth = CURRENT_MAP[0].length; 
         
         const wallColors = ['wall-blue', 'wall-yellow', 'wall-red', 'wall-green'];
         let currentColorIndex = 0; 
         
-        // --- 3. Controle de Dificuldade ---
-        window.setDifficulty = function(level) {
-            currentLevel = level;
-            gameSettings = DIFFICULTIES[level];
-            gameTitle.textContent = `AURA: O Labirinto do Encontro - ${gameSettings.name}`;
-            
-            // Marca o botão ativo
-            document.querySelectorAll('#difficulty-selector button').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            document.getElementById(`btn-${level.toLowerCase()}`).classList.add('active');
-
-            resetGame();
-        }
-
         // --- FUNÇÕES DE ATUALIZAÇÃO E FEEDBACK ---
         function updateFocus(change) {
             focusValue = Math.min(100, Math.max(0, focusValue + change));
-            focusMeterDisplay.textContent = focusValue.toFixed(0); 
+            focusMeterDisplay.textContent = focusValue;
             if (focusValue <= 20) { focusMeterDisplay.style.color = 'red'; } else { focusMeterDisplay.style.color = '#d0021b'; }
             if (focusValue === 0) { alert("O Foco se esgotou! Fim de Jogo."); resetGame(); }
         }
@@ -285,11 +181,9 @@
             auraSignalDisplay.textContent = signalText;
         }
 
-        // --- 4. Função de Renderização ---
+        // --- 3. Função de Renderização ---
         function drawMaze(map) {
             mazeContainer.innerHTML = '';
-            mapHeight = map.length; 
-            mapWidth = map[0].length; 
             mazeContainer.style.gridTemplateColumns = `repeat(${mapWidth}, 30px)`;
             mazeContainer.style.gridTemplateRows = `repeat(${mapHeight}, 30px)`;
             
@@ -299,17 +193,15 @@
                     tile.classList.add('tile');
                     tile.dataset.x = x;
                     tile.dataset.y = y;
-                    
-                    // Adiciona o listener de clique AQUI
-                    tile.addEventListener('click', movePlayerOnClick);
 
-                    const baseTileType = CURRENT_MAP[y][x]; 
+                    const baseTileType = INITIAL_MAP[y][x]; 
 
                     switch (baseTileType) {
                         case '#': tile.classList.add(wallColors[currentColorIndex]); currentColorIndex = (currentColorIndex + 1) % wallColors.length; break;
                         case 'S': tile.classList.add('sofa'); tile.textContent = EMOJI_SOFA; break;
                         case 'B': tile.classList.add('bed'); tile.textContent = EMOJI_BED; break;
-                        case 'T': case '_': default: tile.classList.add('path'); break;
+                        case 'T': // TILE T agora é só caminho
+                        case '_': default: tile.classList.add('path'); break;
                         
                         case 'D': tile.classList.add('door'); tile.textContent = EMOJI_DOOR; break; 
                         case 'L': tile.classList.add('locked-door'); tile.textContent = EMOJI_LOCKED_DOOR; break; 
@@ -337,7 +229,6 @@
         }
 
         function placePlayer() {
-            // ... (Função placePlayer mantém a lógica anterior) ...
             const oldPlayerTile = document.querySelector('.player');
             if (oldPlayerTile) {
                 oldPlayerTile.classList.remove('player');
@@ -348,11 +239,12 @@
                 
                 const tileType = CURRENT_MAP[y][x];
                 
+                // Restaura o emoji baseado no estado do CURRENT_MAP (que é mutável)
                 if (tileType === 'S') { oldPlayerTile.textContent = EMOJI_SOFA; }
                 else if (tileType === 'B') { oldPlayerTile.textContent = EMOJI_BED; }
                 else if (tileType === 'D') { oldPlayerTile.textContent = EMOJI_DOOR; }
-                else if (tileType === 'L' && !hasKey) { oldPlayerTile.textContent = EMOJI_LOCKED_DOOR; }
-                else if (tileType === 'K' && !hasKey) { oldPlayerTile.textContent = EMOJI_KEY; }
+                else if (tileType === 'L' && INITIAL_MAP[y][x] === 'L' && !hasKey) { oldPlayerTile.textContent = EMOJI_LOCKED_DOOR; }
+                else if (tileType === 'K' && INITIAL_MAP[y][x] === 'K' && !hasKey) { oldPlayerTile.textContent = EMOJI_KEY; }
                 else if (tileType === 'A') { oldPlayerTile.textContent = EMOJI_AURA; }
                 else if (tileType === 'G') { oldPlayerTile.textContent = EMOJI_CALM; } 
                 else if (tileType === 'R') { oldPlayerTile.textContent = EMOJI_RETREAT; } 
@@ -364,24 +256,8 @@
                 newPlayerTile.textContent = EMOJI_PLAYER; 
             }
         }
-        
-        // --- NOVO: Lógica de Movimento por Clique ---
-        function movePlayerOnClick(event) {
-            const targetX = parseInt(event.currentTarget.dataset.x);
-            const targetY = parseInt(event.currentTarget.dataset.y);
-            
-            const dx = targetX - playerPos.x;
-            const dy = targetY - playerPos.y;
 
-            // Checa se o clique é em um tile adjacente (distância máxima de 1 em X e 1 em Y, mas não na diagonal)
-            if ((Math.abs(dx) === 1 && dy === 0) || (Math.abs(dy) === 1 && dx === 0)) {
-                // Se for adjacente, chama a função de movimento principal
-                movePlayer(dx, dy);
-            }
-            // Ignora cliques no próprio jogador ou em tiles distantes/diagonais.
-        }
-
-        // --- 5. Lógica de Movimento Principal (movePlayer mantém a lógica anterior) ---
+        // --- 4. Lógica de Movimento e Interações ---
         function movePlayer(dx, dy) {
             const newX = playerPos.x + dx;
             const newY = playerPos.y + dy;
@@ -390,9 +266,10 @@
 
             const nextTile = CURRENT_MAP[newY][newX];
 
-            // 1. Bloqueios Fixos (S, B, #, D)
+            // 1. Bloqueios Fixos
+            // Nota: O 'T' foi removido da lista de bloqueios aqui.
             if (nextTile === 'S' || nextTile === 'B' || nextTile === '#' || nextTile === 'D') {
-                updateFocus(gameSettings.hitWallCost); 
+                updateFocus(-10); 
                 return; 
             }
             
@@ -406,11 +283,11 @@
                     playerPos.x = newX;
                     playerPos.y = newY;
                     placePlayer();
-                    updateFocus(gameSettings.moveCost); 
+                    updateFocus(-1); 
                     updateAuraSignal();
                     return; 
                 } else {
-                    updateFocus(gameSettings.hitWallCost); 
+                    updateFocus(-10); 
                     alert("Esta porta está trancada! Você precisa da Chave (🔑) para passar.");
                     return;
                 }
@@ -418,9 +295,9 @@
 
             // 2. Colisão com Recuo Emocional (R)
             if (nextTile === 'R') {
-                updateFocus(gameSettings.retreatCost); 
-                const backX = playerPos.x - (dx * gameSettings.retreatDistance); 
-                const backY = playerPos.y - (dy * gameSettings.retreatDistance);
+                updateFocus(-20); 
+                const backX = playerPos.x - (dx * 3);
+                const backY = playerPos.y - (dy * 3);
                 playerPos.x = Math.min(mapWidth - 1, Math.max(0, backX));
                 playerPos.y = Math.min(mapHeight - 1, Math.max(0, backY));
                 placePlayer(); 
@@ -428,7 +305,7 @@
             }
 
             // 3. Ponto de Calma (G)
-            if (nextTile === 'G') { updateFocus(gameSettings.calmGain); } 
+            if (nextTile === 'G') { updateFocus(5); }
             
             // 3b. Coletar Chave (K)
             if (nextTile === 'K') {
@@ -442,43 +319,35 @@
             playerPos.x = newX;
             playerPos.y = newY;
             placePlayer();
-            updateFocus(gameSettings.moveCost); 
+            updateFocus(-1); 
             updateAuraSignal();
 
             // 5. Verificação de Condição de Vitória (A = Aura)
             if (nextTile === 'A') { gameOver(true); } 
         }
         
-        // --- 6. Lógica de FIM DE JOGO ---
+        // --- 5. Lógica de FIM DE JOGO SIMPLIFICADA ---
         function gameOver(victory) {
             if (victory) {
                 if (focusValue > 50) {
-                    alert(`🌟 VITÓRIA COMPLETA no ${gameSettings.name}! 🌟\nVocê encontrou a Menina (Aura) com Foco de ${focusValue.toFixed(0)}%. Sua conexão está restaurada!`);
+                    // CONDIÇÃO DE VITÓRIA TOTAL (APENAS FOCO)
+                    alert(`🌟 VITÓRIA COMPLETA no NÍVEL EXTREMO! 🌟\nVocê encontrou a Menina (Aura) com Foco de ${focusValue}%. Sua conexão está restaurada!`);
                 } else {
-                    alert(`FALHA DE FOCO. Você encontrou a Menina (Aura), mas seu Foco (${focusValue.toFixed(0)}%) está muito baixo (abaixo de 50%). Você precisa de mais Calma (🧘) para se conectar.`);
+                    // FALHA: FOCO BAIXO
+                    alert(`FALHA DE FOCO. Você encontrou a Menina (Aura), mas seu Foco (${focusValue}%) está muito baixo (abaixo de 50%). Você precisa de mais Calma (🧘) para se conectar.`);
                 }
             }
         }
         
-        // --- 7. Função de Reinício do Jogo ---
-        window.resetGame = function() {
-             CURRENT_MAP = JSON.parse(JSON.stringify(gameSettings.map)); 
-             focusValue = gameSettings.startFocus;
+        // --- 6. Função de Reinício do Jogo ---
+        function resetGame() {
+             focusValue = 100;
              hasKey = false;
-             
-             for(let y = 0; y < CURRENT_MAP.length; y++) {
-                 for(let x = 0; x < CURRENT_MAP[y].length; x++) {
-                     if (CURRENT_MAP[y][x] === 'M') {
-                         playerPos = { x: x, y: y };
-                         break;
-                     }
-                 }
-             }
-
+             CURRENT_MAP = JSON.parse(JSON.stringify(INITIAL_MAP)); 
              drawMaze(CURRENT_MAP); 
         }
 
-        // --- 8. Event Listener para Teclas (Movimentação) ---
+        // --- 7. Event Listener para Teclas (Movimentação) ---
         document.addEventListener('keydown', (e) => {
             switch (e.key) {
                 case 'ArrowUp': movePlayer(0, -1); break;
@@ -488,8 +357,8 @@
             }
         });
 
-        // Inicia o jogo no nível MÉDIO
-        setDifficulty(currentLevel); 
+        // Inicia o jogo
+        drawMaze(CURRENT_MAP);
     </script>
 </body>
 </html>
