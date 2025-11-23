@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AURA: O Labirinto do Encontro (Controle Total)</title>
+    <title>AURA</title>
 
     <style>
         /* ------------------- CSS ------------------- */
@@ -67,7 +67,7 @@
     </style>
 </head>
 <body>
-    <h1>AURA: O Labirinto do Encontro (Controle Total)</h1>
+    <h1>AURA</h1>
     
     <div id="game-info">
         <div id="focus-meter">Foco: <span id="f-value">100</span>%</div>
@@ -81,7 +81,7 @@
     </div>
     
     <p class="instructions">
-        Use as setas/W-A-S-D **OU** o Controle Bluetooth. **Status do Controle:** <span id="gamepad-status">🛑 Desconectado</span>.
+         **Status do Controle:** <span id="gamepad-status">🛑 Desconectado</span>.
     </p>
 
     <script>
@@ -172,7 +172,7 @@
         }
         
         function updateKeyStatus() { 
-            keyStatusDisplay.textContent = hasKey ? '🟢 Coletada' : '🔴 Ausente';
+            keyStatusDisplay.textContent = hasKey ? '🟢 com a chave' : '🔴 sem a chave';
             keyStatusDisplay.style.color = hasKey ? '#2e8b57' : '#b8860b';
         }
 
@@ -326,7 +326,7 @@
                 hasKey = true;
                 CURRENT_MAP[newY][newX] = '_'; // Remove a chave do mapa
                 updateKeyStatus();
-                messageDisplay.textContent = "Chave (🔑) coletada!";
+                messageDisplay.textContent = "Chave (🔑) com a chave!";
             }
             
             // 4. Atualizar Posição (Movimento normal)
@@ -341,12 +341,12 @@
         }
         
         function gameOver(victory, focusDefeat = false) {
-            const RESTART_DELAY = 5000; // 5 segundos
+            const RESTART_DELAY = 25000; // 5 segundos
             
             if (!focusDefeat) {
                 if (victory) {
-                    if (focusValue > 50) { 
-                        messageDisplay.textContent = `🎉 VITÓRIA! VOCÊ ACHOU AURA! Foco: ${focusValue}%. Reiniciando em 5 segundos...`;
+                    if (focusValue > 10) { 
+                        messageDisplay.textContent = `VOCÊ ACHOU AURA! Foco: ${focusValue}%. Reiniciando em 25 segundos...`;
                     } else {
                         messageDisplay.textContent = `⚠️ DERROTA: Encontro falhou. Foco muito baixo (${focusValue}%). Reiniciando em 5 segundos...`;
                     }
