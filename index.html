@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AURA</title>
+    <title>AURA - Nível Hard</title>
 
     <style>
         /* ------------------- CSS ------------------- */
@@ -21,14 +21,15 @@
             font-size: 1.2em;
             text-align: center;
         }
-        #maze-container { display: grid; grid-template-columns: repeat(18, 30px); grid-template-rows: repeat(18, 30px); border: 4px solid #1a1a1a; box-shadow: 0 0 20px rgba(0, 0, 0, 0.3); background-color: #e6e6e6; }
+        /* ATENÇÃO: Mudança aqui para suportar 20x20 */
+        #maze-container { display: grid; grid-template-columns: repeat(20, 30px); grid-template-rows: repeat(20, 30px); border: 4px solid #1a1a1a; box-shadow: 0 0 20px rgba(0, 0, 0, 0.3); background-color: #e6e6e6; }
         .tile { width: 30px; height: 30px; box-sizing: border-box; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 1.2em; transition: background-color 0.1s; }
 
         .wall-blue { background-color: #4a90e2; border: 1px solid #357ae8; }
         .wall-yellow { background-color: #f8e71c; border: 1px solid #e1d30f; }
         .wall-red { background-color: #d0021b; border: 1px solid #a80017; }
         .wall-green { background-color: #7ed321; border: 1px solid #5fb50d; }
-          
+            
         .door { background-color: #b8860b; border: 1px solid #8b6508; } 
         .locked-door { background-color: #900d0d; border: 2px solid #5a0707; color: white; } 
         .key { background-color: #ffd700; border: 1px solid #ccab00; } 
@@ -67,11 +68,11 @@
     </style>
 </head>
 <body>
-    <h1>AURA</h1>
+    <h1>AURA - Nível Impossível</h1>
     
     <div id="game-info">
         <div id="focus-meter">Foco: <span id="f-value">100</span>%</div>
-        <div id="aura-signal">Sinal da Menina: <span>🔴 Distante</span></div>
+        <div id="aura-signal">Sinal da Pulseira: <span>🔴 Distante</span></div>
         <div id="key-status">Chave (K): <span>🔴 Ausente</span></div>
     </div>
     
@@ -81,7 +82,7 @@
     </div>
     
     <p class="instructions">
-         **Status do Controle:** <span id="gamepad-status">🛑 Desconectado</span>.
+          **Status do Controle:** <span id="gamepad-status">🛑 Desconectado</span>.
     </p>
 
     <script>
@@ -101,7 +102,9 @@
         const EMOJI_CALM = '🧘'; 
         const EMOJI_RETREAT = '😠'; 
 
-        // --- 1. Definição do Mapa ORIGINAL (18x18) ---
+        // --- 1. Definição dos Mapas de Dificuldade (20x20) ---
+        
+        // Mapa Original (18x18) - Mantido para referência, mas não será o principal
         const ORIGINAL_MAP = [
             ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'], 
             ['#', '_', 'N', 'K', '_', '_', '_', '_', '_', 'L', '_', '_', '_', '_', '_', '_', '_', '#'], 
@@ -118,20 +121,106 @@
             ['#', 'K', 'G', '_', '_', '_', '_', '_', '_', '_', '_', '#', '_', '#', '#', 'L', '#', '#'], 
             ['#', '#', '#', '#', '#', 'L', '#', '#', '#', '#', '#', '#', '_', '_', '_', '_', '_', '#'], 
             ['#', 'D', '_', 'N', '_', '_', '_', 'K', '_', '_', 'L', '#', 'L', '#', '#', '#', '#', '#'], 
-            ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '_', 'G', '_', '_', '_', '_', '_', 'A'], 
-            ['#', 'G', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '#'], 
+            ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '_', 'G', '#', '_', '_', '_', '_', 'A'], 
+            ['#', 'G', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '#', '_', '_', '_', '_', '#'], 
             ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'] 
         ];
 
-        let CURRENT_MAP; 
+        // 1. Nível Difícil: "O Labirinto da Ansiedade" (20x20)
+        const HARD_MAP_ANXIETY = [
+            ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+            ['#', 'M', '_', '_', 'R', '#', '_', '_', '_', '_', '_', 'L', '_', '_', '_', '_', '_', '_', '_', '#'],
+            ['#', '#', '#', '#', '#', '#', 'L', '#', 'B', '#', '#', '#', '#', 'L', '#', '#', '#', '#', '#', '#'],
+            ['#', '_', 'K', '_', 'R', '_', '_', '#', '_', '_', '_', '_', 'K', '_', '_', '_', '_', '_', '_', '#'],
+            ['#', '_', '#', '#', '#', '#', '#', '#', '#', 'D', '#', '#', '#', 'R', '#', 'R', '#', '#', 'D', '#'],
+            ['#', '_', '#', 'S', '_', '_', 'K', '_', '_', '_', 'G', '_', '_', '_', '_', '_', 'L', '_', '_', '#'],
+            ['#', 'L', '#', '#', '#', 'L', '#', '#', 'T', '#', '#', '#', '#', '#', '#', '#', '#', '#', 'R', '#'],
+            ['#', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', 'G', '_', 'K', '#'],
+            ['#', 'R', '#', '#', '#', 'L', '#', '#', '#', '#', 'D', '#', '#', '#', 'L', '#', '#', '#', '#', '#'],
+            ['#', '_', '_', 'K', '_', '_', 'G', '_', '_', 'R', '_', '_', '_', '_', '_', '_', '_', '_', '_', '#'],
+            ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', 'L', '#', '#', 'R', '#', '#', '#', '#', '#'],
+            ['#', 'S', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', 'K', '_', '#'],
+            ['#', '#', '#', 'R', '#', '#', '#', '#', 'L', '#', 'G', '#', 'L', '#', 'D', '#', '#', '#', '#', '#'],
+            ['#', '_', '_', '_', '_', '_', '_', 'K', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', 'L', '#'],
+            ['#', 'L', '#', '#', '#', '#', '#', '#', '#', '#', '#', 'R', '#', '#', 'L', '#', '#', '#', '#', '#'],
+            ['#', '_', 'B', '_', '_', '_', 'G', '_', '_', '_', 'S', '_', '_', '_', '_', '_', 'K', '_', '_', '#'],
+            ['#', '#', '#', '#', '#', 'R', '#', '#', '#', 'D', '#', '#', '#', '#', '#', 'L', '#', '#', 'D', '#'],
+            ['#', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', 'R', '_', '_', '_', '_', '_', 'A', '#'],
+            ['#', '#', 'L', '#', '#', '#', '#', 'L', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+            ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#']
+        ];
+
+        // 2. Nível Mestre: "O Pântano da Autocrítica" (20x20)
+        const MASTER_MAP_CRITICISM = [
+            ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+            ['#', 'M', '#', '#', '#', 'L', '_', '_', '_', '#', 'R', '_', '_', 'K', '_', '_', '_', '_', '_', '#'],
+            ['#', '_', '_', '_', '_', '_', '_', '#', 'R', '#', '#', '#', '#', '#', '#', '#', '#', '#', 'L', '#'],
+            ['#', 'L', '#', '#', 'R', '#', '#', '#', '_', 'B', '_', '_', '_', '_', '_', 'D', '_', '#', '_', '#'],
+            ['#', '_', '#', 'G', '_', '_', 'T', '#', 'S', '#', '#', '#', 'L', '#', '#', '#', '#', '#', 'K', '#'],
+            ['#', '_', '#', '#', '#', '#', '#', '#', '_', '_', '_', '_', '_', '_', '_', '_', 'G', 'R', '_', '#'],
+            ['#', '_', '_', '_', '_', '_', '_', 'L', '#', '#', 'D', '#', 'R', '#', '#', 'L', '#', '#', '#', '#'],
+            ['#', '#', '#', '#', '#', '#', 'R', '#', 'G', '_', '_', '_', 'L', '_', '_', '_', '_', 'K', '_', '#'],
+            ['#', 'K', '_', '_', '_', '_', '_', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', 'D', '#'],
+            ['#', '#', '#', 'L', '#', '#', '#', '#', 'T', '_', '_', '_', '_', '_', '_', '_', 'R', '_', '_', '#'],
+            ['#', 'S', '_', '_', '_', '_', 'G', '_', '_', '_', '#', '#', '#', 'L', '#', 'L', '#', '#', 'L', '#'],
+            ['#', '#', '#', '#', '#', '#', '#', '#', 'L', '#', '_', '_', '_', '_', '_', '_', '_', 'B', '_', '#'],
+            ['#', 'R', '_', '_', 'L', '_', '_', 'R', '#', '#', '_', 'R', '#', 'D', '#', '#', '#', '#', '#', '#'],
+            ['#', '#', 'L', '#', '#', '#', '#', '#', '#', 'D', '#', '_', '#', 'G', '_', '_', '_', '_', 'K', '#'],
+            ['#', '_', '_', '_', '_', '_', 'K', '_', '_', '_', '_', '_', '#', '#', '#', 'L', '#', '#', 'R', '#'],
+            ['#', '#', '#', '#', '#', '#', '#', '#', 'R', '#', '#', '#', '#', '_', 'T', '_', '_', '_', '_', '#'],
+            ['#', 'G', '_', 'D', '_', '_', 'L', '_', '_', '_', '_', 'L', '#', '_', '#', 'L', '#', 'B', '#', '#'],
+            ['#', 'L', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '_', '#', '_', '_', '_', '_', 'A'],
+            ['#', 'R', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '#', '#', '#', '#', '#', '#'],
+            ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#']
+        ];
+
+        // 3. Nível Impossível: "O Vazio do Burnout" (20x20) - MAPA PADRÃO
+        const IMPOSSIBLE_MAP_BURNOUT = [
+            ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+            ['#', 'M', 'R', '#', 'K', 'L', '_', '_', 'R', '#', 'L', '_', '_', '_', 'R', '#', 'G', '_', 'L', '#'],
+            ['#', '_', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+            ['#', 'R', '_', 'L', '_', '_', 'G', 'R', '_', 'T', '_', 'D', 'R', 'L', '_', 'K', '_', 'R', 'D', '#'],
+            ['#', '#', '#', '#', '#', 'R', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+            ['#', 'L', '_', '_', 'K', '_', '_', '_', '_', 'S', '_', 'R', '_', 'T', '_', 'R', '_', 'L', '_', '#'],
+            ['#', '#', '#', 'R', '#', '#', '#', 'L', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+            ['#', '_', '_', '_', '_', 'R', '_', '_', '_', 'G', '_', '_', '_', '_', '_', 'D', '_', 'R', '_', '#'],
+            ['#', 'L', '#', '#', 'T', '#', '#', '#', '#', '#', '#', 'L', '#', 'R', '#', '#', '#', '#', '#', '#'],
+            ['#', '_', '_', '_', 'L', '_', '_', 'K', '_', '_', 'R', '_', 'T', '_', '_', '_', 'G', 'L', '_', '#'],
+            ['#', '#', '#', 'R', '#', '#', 'L', '#', '#', '#', '#', '#', '#', '#', '#', 'R', '#', '#', '#', '#'],
+            ['#', 'G', '_', 'L', '_', '_', '_', '_', '_', '_', 'D', '_', '_', 'L', '_', '_', '_', '_', 'K', '#'],
+            ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', 'L', '#', '#', '#'],
+            ['#', 'L', '_', '_', 'R', '_', 'K', '_', 'G', '_', 'L', '_', '_', 'R', '_', 'B', '_', '_', 'D', '#'],
+            ['#', '#', '#', '#', '#', '#', '#', 'L', '#', '#', '#', '#', '#', '#', '#', '#', '#', 'R', '#', '#'],
+            ['#', 'R', '_', '_', '_', '_', '_', '_', '_', 'D', 'R', '_', 'S', '_', 'L', '_', '_', '_', '_', '#'],
+            ['#', '#', 'L', '#', 'R', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', 'R', '#'],
+            ['#', 'K', '_', '_', '_', '_', 'G', '_', '_', '_', 'L', '_', '_', 'T', '_', 'K', '_', 'L', '_', 'A'],
+            ['#', 'R', '#', '#', '#', 'R', '#', '#', '#', 'D', '#', 'R', '#', '#', '#', '#', '#', '#', '#', '#'],
+            ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#']
+        ];
+
+        // Agrupa todos os mapas para seleção
+        const ALL_MAPS = {
+            'FACIL': ORIGINAL_MAP,
+            'DIFICIL': HARD_MAP_ANXIETY,
+            'MESTRE': MASTER_MAP_CRITICISM,
+            'IMPOSSIVEL': IMPOSSIBLE_MAP_BURNOUT
+        };
+
+        // Seleciona a dificuldade padrão
+        let currentDifficulty = 'IMPOSSIVEL';
+        let CURRENT_MAP = ALL_MAPS[currentDifficulty];
+        
+        // ATUALIZAÇÃO: Redefinir as dimensões do mapa baseadas no mapa selecionado (20x20)
+        let mapHeight = CURRENT_MAP.length; 
+        let mapWidth = CURRENT_MAP[0].length; 
         
         const ROOM_NAMES_SALA = {
-            '2,1': 'SALA DE ESTAR', '14,5': 'COZINHA', '1,8': 'QUARTO 1', '1,11': 'BANHEIRO', '3,14': 'QUARTO 2', '14,16': 'QUARTO AURA'
+            '2,1': 'SALA DE ESTAR', '14,5': 'COZINHA', '1,8': 'QUARTO 1', '1,11': 'BANHEIRO', '3,14': 'QUARTO 2', '17,17': 'QUARTO AURA' // Posições adaptadas
         };
         
         let playerPos = { x: 0, y: 0 }; 
         let focusValue = 100;
-        let auraPos = { x: 17, y: 16 }; 
+        let auraPos = { x: 0, y: 0 }; // Será redefinida ao desenhar o mapa
         let hasKey = false; 
         
         // Elementos DOM
@@ -141,9 +230,6 @@
         const keyStatusDisplay = document.querySelector('#key-status span'); 
         const messageDisplay = document.getElementById('message-display'); 
         const gamepadStatusDisplay = document.getElementById('gamepad-status');
-        
-        const mapHeight = ORIGINAL_MAP.length; 
-        const mapWidth = ORIGINAL_MAP[0].length; 
         
         const wallColors = ['wall-blue', 'wall-yellow', 'wall-red', 'wall-green'];
         let currentColorIndex = 0; 
@@ -179,14 +265,15 @@
         function updateAuraSignal() {
             const distance = Math.abs(playerPos.x - auraPos.x) + Math.abs(playerPos.y - auraPos.y);
             let signalText;
-            if (distance <= 6) { signalText = '🟢 Perto! (Menina próxima)'; auraSignalDisplay.style.color = '#f5a623'; } 
+            if (distance <= 6) { signalText = '🟢 Perto! (Menina próxima)'; auraSignalDisplay.style.color = '#7ed321'; } 
             else if (distance <= 20) { signalText = '🟡 Médio (Sinal forte)'; auraSignalDisplay.style.color = '#4a90e2'; } 
-            else { signalText = '🔴 Distante (Sinal fraco)'; auraSignalDisplay.style.color = '#7ed321'; }
+            else { signalText = '🔴 Distante (Sinal fraco)'; auraSignalDisplay.style.color = '#f5a623'; }
             auraSignalDisplay.textContent = signalText;
         }
         
         function drawMaze(map) {
             mazeContainer.innerHTML = '';
+            // Usa as dimensões atualizadas
             mazeContainer.style.gridTemplateColumns = `repeat(${mapWidth}, 30px)`;
             mazeContainer.style.gridTemplateRows = `repeat(${mapHeight}, 30px)`;
             
@@ -245,6 +332,8 @@
         }
 
         function movePlayer(dx, dy) {
+            if (focusValue === 0) return; // Não permite movimento se o foco for zero
+
             const newX = playerPos.x + dx;
             const newY = playerPos.y + dy;
             
@@ -360,8 +449,13 @@
             focusValue = 100;
             hasKey = false;
             
-            // Recria o mapa a partir da matriz original
-            CURRENT_MAP = copyMap(ORIGINAL_MAP); 
+            // Re-seleciona o mapa (neste caso, o IMPOSSÍVEL)
+            CURRENT_MAP = copyMap(ALL_MAPS[currentDifficulty]); 
+            
+            // ATUALIZAÇÃO ESSENCIAL: Redefine as dimensões do labirinto
+            mapHeight = CURRENT_MAP.length;
+            mapWidth = CURRENT_MAP[0].length;
+            
             messageDisplay.textContent = ''; 
 
             // Encontra a posição inicial 'M'
