@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AURA: O Labirinto do Encontro (Gamepad Otimizado)</title>
+    <title>AURA: O Labirinto do Encontro (Controle Total)</title>
 
     <style>
         /* ------------------- CSS ------------------- */
@@ -28,7 +28,7 @@
         .wall-yellow { background-color: #f8e71c; border: 1px solid #e1d30f; }
         .wall-red { background-color: #d0021b; border: 1px solid #a80017; }
         .wall-green { background-color: #7ed321; border: 1px solid #5fb50d; }
-         
+          
         .door { background-color: #b8860b; border: 1px solid #8b6508; } 
         .locked-door { background-color: #900d0d; border: 2px solid #5a0707; color: white; } 
         .key { background-color: #ffd700; border: 1px solid #ccab00; } 
@@ -67,7 +67,7 @@
     </style>
 </head>
 <body>
-    <h1>AURA: O Labirinto do Encontro (Gamepad Otimizado)</h1>
+    <h1>AURA: O Labirinto do Encontro (Controle Total)</h1>
     
     <div id="game-info">
         <div id="focus-meter">Foco: <span id="f-value">100</span>%</div>
@@ -81,8 +81,7 @@
     </div>
     
     <p class="instructions">
-        Use as setas **OU** o Controle Bluetooth. **Status do Controle:** <span id="gamepad-status">🛑 Desconectado</span>.
-        (Se o controle não funcionar, pressione um botão nele após carregar a página).
+        Use as setas/W-A-S-D **OU** o Controle Bluetooth. **Status do Controle:** <span id="gamepad-status">🛑 Desconectado</span>.
     </p>
 
     <script>
@@ -121,7 +120,7 @@
             ['#', 'D', '_', 'N', '_', '_', '_', 'K', '_', '_', 'L', '#', 'L', '#', '#', '#', '#', '#'], 
             ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '_', 'G', '_', '_', '_', '_', '_', 'A'], 
             ['#', 'G', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '#'], 
-            ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#']  
+            ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'] 
         ];
 
         let CURRENT_MAP; 
@@ -152,7 +151,7 @@
         // Estado do Gamepad
         let gamepadIndex = null;
         let lastMoveTime = 0;
-        const MOVE_COOLDOWN = 120; // 120ms de cooldown para evitar movimento muito rápido
+        const MOVE_COOLDOWN = 120; // Cooldown para movimentos (Gamepads e Teclado Rápido)
 
         function copyMap(map) {
             return map.map(row => [...row]);
@@ -278,6 +277,7 @@
                     
                     CURRENT_MAP[newY][newX] = '_';
                     
+                    // Atualiza a representação visual da porta
                     const unlockedTile = document.querySelector(`[data-x="${newX}"][data-y="${newY}"]`);
                     if (unlockedTile) {
                         unlockedTile.classList.remove('locked-door');
@@ -300,15 +300,19 @@
                 }
             }
 
-            // 2. Colisão com Recuo Emocional (R) (-20 Foco)
+            // 2. Colisão com Recuo Emocional (R) (-20 Foco e Recuo de 3 tiles)
             if (nextTile === 'R') {
                 updateFocus(-20); 
                 const backX = playerPos.x - (dx * 3);
                 const backY = playerPos.y - (dy * 3);
+                
+                // Teleporta o jogador para 3 casas atrás (ou no limite do mapa)
                 playerPos.x = Math.min(mapWidth - 1, Math.max(0, backX));
                 playerPos.y = Math.min(mapHeight - 1, Math.max(0, backY));
+                
                 placePlayer(); 
                 updateAuraSignal();
+                messageDisplay.textContent = "Recuo! Perdeu 20 de Foco e foi empurrado(a) para trás.";
                 return; 
             }
 
@@ -320,7 +324,7 @@
             // 3b. Coletar Chave (K)
             if (nextTile === 'K') {
                 hasKey = true;
-                CURRENT_MAP[newY][newX] = '_'; 
+                CURRENT_MAP[newY][newX] = '_'; // Remove a chave do mapa
                 updateKeyStatus();
                 messageDisplay.textContent = "Chave (🔑) coletada!";
             }
@@ -329,7 +333,7 @@
             playerPos.x = newX;
             playerPos.y = newY;
             placePlayer();
-            updateFocus(-1); 
+            updateFocus(-1); // Custo de movimento normal
             updateAuraSignal();
 
             // 5. Verificação de Condição de Vitória (A = Aura)
@@ -342,16 +346,11 @@
             if (!focusDefeat) {
                 if (victory) {
                     if (focusValue > 50) { 
-                        // MENSAGEM DE VITÓRIA CUSTOMIZADA: VOCÊ ACHOU AURA
-                        messageDisplay.textContent = `🎉 VOCÊ ACHOU AURA! Foco: ${focusValue}%. Reiniciando em 5 segundos...`;
+                        messageDisplay.textContent = `🎉 VITÓRIA! VOCÊ ACHOU AURA! Foco: ${focusValue}%. Reiniciando em 5 segundos...`;
                     } else {
-                        // DERROTA POR FOCO BAIXO
                         messageDisplay.textContent = `⚠️ DERROTA: Encontro falhou. Foco muito baixo (${focusValue}%). Reiniciando em 5 segundos...`;
                     }
                 } 
-            } else {
-                // DERROTA POR FOCO ZERADO
-                // A mensagem já é definida em updateFocus
             }
             
             setTimeout(resetGame, RESTART_DELAY); 
@@ -361,9 +360,11 @@
             focusValue = 100;
             hasKey = false;
             
+            // Recria o mapa a partir da matriz original
             CURRENT_MAP = copyMap(ORIGINAL_MAP); 
             messageDisplay.textContent = ''; 
 
+            // Encontra a posição inicial 'M'
             let startFound = false;
             for (let y = 0; y < mapHeight; y++) {
                 for (let x = 0; x < mapWidth; x++) {
@@ -382,12 +383,12 @@
         }
 
         /* ------------------------------------------- */
-        /* --- SUPORTE A GAMEPAD (BLUETOOTH) OTIMIZADO --- */
+        /* --- LÓGICA DE CONTROLE (TECLADO & GAMEPAD) --- */
         /* ------------------------------------------- */
         
         function updateGamepadStatus(connected, name = '') {
             if (connected) {
-                gamepadStatusDisplay.textContent = `✅ Conectado: ${name}`;
+                gamepadStatusDisplay.textContent = `✅ Conectado: ${name.substring(0, 30)}...`; // Limita o nome
                 gamepadStatusDisplay.style.color = '#2e8b57';
             } else {
                 gamepadStatusDisplay.textContent = `🛑 Desconectado`;
@@ -395,6 +396,7 @@
             }
         }
 
+        // Eventos de conexão e desconexão
         window.addEventListener("gamepadconnected", (e) => {
             gamepadIndex = e.gamepad.index;
             updateGamepadStatus(true, e.gamepad.id);
@@ -420,7 +422,6 @@
                     return;
                 }
 
-                // Cooldown: evita que um único pressionamento de botão mova o personagem várias vezes
                 if (now < lastMoveTime + MOVE_COOLDOWN) {
                     requestAnimationFrame(handleGamepadInput);
                     return; 
@@ -432,14 +433,14 @@
                 
                 const buttons = gamepad.buttons;
 
-                // 1. Movimento pelo D-Pad (Botões 12:Cima, 13:Baixo, 14:Esquerda, 15:Direita no padrão W3C)
-                if (buttons[12] && buttons[12].pressed) { dy = -1; moved = true; }
-                else if (buttons[13] && buttons[13].pressed) { dy = 1; moved = true; }
-                else if (buttons[14] && buttons[14].pressed) { dx = -1; moved = true; }
-                else if (buttons[15] && buttons[15].pressed) { dx = 1; moved = true; }
+                // 1. Movimento pelo D-Pad (Botões 12, 13, 14, 15 no padrão)
+                if (buttons[12] && buttons[12].pressed) { dy = -1; moved = true; } // Cima
+                else if (buttons[13] && buttons[13].pressed) { dy = 1; moved = true; } // Baixo
+                else if (buttons[14] && buttons[14].pressed) { dx = -1; moved = true; } // Esquerda
+                else if (buttons[15] && buttons[15].pressed) { dx = 1; moved = true; } // Direita
 
                 // 2. Movimento pelo Analógico Esquerdo (Eixos 0 e 1)
-                const AXIS_THRESHOLD = 0.4; // Sensibilidade ajustada
+                const AXIS_THRESHOLD = 0.4; 
                 const axisX = gamepad.axes[0] || 0; 
                 const axisY = gamepad.axes[1] || 0;
                 
@@ -460,7 +461,7 @@
                     lastMoveTime = now;
                 }
             } else {
-                 // Tenta encontrar um gamepad caso não tenha sido detectado pelo evento
+                // Tenta encontrar um gamepad caso não tenha sido detectado pelo evento
                 for (let i = 0; i < gamepads.length; i++) {
                     if (gamepads[i]) {
                         gamepadIndex = i;
@@ -470,22 +471,44 @@
                 }
             }
 
+            // Loop principal de checagem do Gamepad
             requestAnimationFrame(handleGamepadInput);
         }
         
-        // --- 7. Event Listener para Teclas (Movimentação) ---
+        // --- Event Listener para Teclas (Priorizando o bloqueio de scroll) ---
         document.addEventListener('keydown', (e) => {
+            let dx = 0;
+            let dy = 0;
+            let validKey = false;
+
             switch (e.key) {
-                case 'ArrowUp': movePlayer(0, -1); break;
-                case 'ArrowDown': movePlayer(0, 1); break;
-                case 'ArrowLeft': movePlayer(-1, 0); break;
-                case 'ArrowRight': movePlayer(1, 0); break;
+                case 'ArrowUp': 
+                case 'w': dy = -1; validKey = true; break;
+                case 'ArrowDown': 
+                case 's': dy = 1; validKey = true; break;
+                case 'ArrowLeft': 
+                case 'a': dx = -1; validKey = true; break;
+                case 'ArrowRight': 
+                case 'd': dx = 1; validKey = true; break;
+            }
+
+            if (validKey) {
+                e.preventDefault(); // *** ESSENCIAL: Impede o scroll da página ***
+                
+                // Aplica o cooldown também ao teclado 
+                const now = performance.now();
+                if (now < lastMoveTime + MOVE_COOLDOWN) {
+                    return; 
+                }
+
+                movePlayer(dx, dy);
+                lastMoveTime = now;
             }
         });
 
         // Inicia o jogo e o loop de checagem do Gamepad
         resetGame();
-        handleGamepadInput();
+        handleGamepadInput(); 
     </script>
 </body>
 </html>
