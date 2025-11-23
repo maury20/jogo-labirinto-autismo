@@ -165,7 +165,7 @@
             if (focusValue <= 20) { focusMeterDisplay.style.color = 'red'; } else { focusMeterDisplay.style.color = '#d0021b'; }
             
             if (focusValue === 0) { 
-                messageDisplay.textContent = "❌ DERROTA: O Foco se esgotou! Reiniciando..."; 
+                messageDisplay.textContent = "O Foco se esgotou! Reiniciando..."; 
                 gameOver(false, true); 
                 return;
             }
@@ -341,14 +341,14 @@
         }
         
         function gameOver(victory, focusDefeat = false) {
-            const RESTART_DELAY = 25000; // 5 segundos
+            const RESTART_DELAY = 5000; // 5 segundos
             
             if (!focusDefeat) {
                 if (victory) {
                     if (focusValue > 10) { 
-                        messageDisplay.textContent = `VOCÊ ACHOU AURA! Foco: ${focusValue}%. Reiniciando em 25 segundos...`;
+                        messageDisplay.textContent = `VOCÊ ACHOU AURA! Foco: ${focusValue}%. Reiniciando em 5 segundos...`;
                     } else {
-                        messageDisplay.textContent = `⚠️ DERROTA: Encontro falhou. Foco muito baixo (${focusValue}%). Reiniciando em 5 segundos...`;
+                        messageDisplay.textContent = ` Encontro falhou. Foco muito baixo (${focusValue}%). Reiniciando em 5 segundos...`;
                     }
                 } 
             }
