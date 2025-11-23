@@ -82,6 +82,7 @@
     
     <p class="instructions">
         Use as setas **OU** o Controle Bluetooth. **Status do Controle:** <span id="gamepad-status">🛑 Desconectado</span>.
+        (Se o controle não funcionar, pressione um botão nele após carregar a página).
     </p>
 
     <script>
@@ -157,7 +158,7 @@
             return map.map(row => [...row]);
         }
         
-        /* --- Funções de Estado --- */
+        /* --- Funções de Jogo e Estado --- */
 
         function updateFocus(change) {
             focusValue = Math.min(100, Math.max(0, focusValue + change));
@@ -165,7 +166,6 @@
             if (focusValue <= 20) { focusMeterDisplay.style.color = 'red'; } else { focusMeterDisplay.style.color = '#d0021b'; }
             
             if (focusValue === 0) { 
-                // Mensagem de Game Over por Foco Zero
                 messageDisplay.textContent = "❌ DERROTA: O Foco se esgotou! Reiniciando..."; 
                 gameOver(false, true); 
                 return;
@@ -186,8 +186,6 @@
             auraSignalDisplay.textContent = signalText;
         }
         
-        /* --- Funções de Renderização --- */
-
         function drawMaze(map) {
             mazeContainer.innerHTML = '';
             mazeContainer.style.gridTemplateColumns = `repeat(${mapWidth}, 30px)`;
@@ -246,8 +244,6 @@
                 newPlayerTile.textContent = EMOJI_PLAYER; 
             }
         }
-
-        /* --- Funções de Jogo --- */
 
         function movePlayer(dx, dy) {
             const newX = playerPos.x + dx;
@@ -346,10 +342,10 @@
             if (!focusDefeat) {
                 if (victory) {
                     if (focusValue > 50) { 
-                        // MENSAGEM DE VITÓRIA CUSTOMIZADA
+                        // MENSAGEM DE VITÓRIA CUSTOMIZADA: VOCÊ ACHOU AURA
                         messageDisplay.textContent = `🎉 VOCÊ ACHOU AURA! Foco: ${focusValue}%. Reiniciando em 5 segundos...`;
                     } else {
-                        // DERROTA POR FOCO BAIXO (MESMO ACHANDO AURA)
+                        // DERROTA POR FOCO BAIXO
                         messageDisplay.textContent = `⚠️ DERROTA: Encontro falhou. Foco muito baixo (${focusValue}%). Reiniciando em 5 segundos...`;
                     }
                 } 
@@ -358,7 +354,6 @@
                 // A mensagem já é definida em updateFocus
             }
             
-            // REINÍCIO AUTOMÁTICO APÓS 5 SEGUNDOS
             setTimeout(resetGame, RESTART_DELAY); 
         }
         
@@ -390,7 +385,6 @@
         /* --- SUPORTE A GAMEPAD (BLUETOOTH) OTIMIZADO --- */
         /* ------------------------------------------- */
         
-        // Função para atualizar o status do Gamepad na tela
         function updateGamepadStatus(connected, name = '') {
             if (connected) {
                 gamepadStatusDisplay.textContent = `✅ Conectado: ${name}`;
@@ -401,7 +395,6 @@
             }
         }
 
-        // Eventos de conexão e desconexão
         window.addEventListener("gamepadconnected", (e) => {
             gamepadIndex = e.gamepad.index;
             updateGamepadStatus(true, e.gamepad.id);
@@ -416,20 +409,18 @@
 
 
         function handleGamepadInput() {
-            // Usa navigator.getGamepads() para obter o estado atual
             const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
             const gamepad = gamepads[gamepadIndex];
 
             if (gamepad) {
                 const now = performance.now();
                 
-                // Impede o movimento se o jogo terminou
                 if (focusValue === 0) {
                     requestAnimationFrame(handleGamepadInput);
                     return;
                 }
 
-                // Cooldown: permite que o jogador se mova apenas a cada 120ms
+                // Cooldown: evita que um único pressionamento de botão mova o personagem várias vezes
                 if (now < lastMoveTime + MOVE_COOLDOWN) {
                     requestAnimationFrame(handleGamepadInput);
                     return; 
@@ -441,18 +432,14 @@
                 
                 const buttons = gamepad.buttons;
 
-                // 1. Movimento pelo D-Pad (Botões 12, 13, 14, 15 no padrão)
-                // Cima (12)
+                // 1. Movimento pelo D-Pad (Botões 12:Cima, 13:Baixo, 14:Esquerda, 15:Direita no padrão W3C)
                 if (buttons[12] && buttons[12].pressed) { dy = -1; moved = true; }
-                // Baixo (13)
                 else if (buttons[13] && buttons[13].pressed) { dy = 1; moved = true; }
-                // Esquerda (14)
                 else if (buttons[14] && buttons[14].pressed) { dx = -1; moved = true; }
-                // Direita (15)
                 else if (buttons[15] && buttons[15].pressed) { dx = 1; moved = true; }
 
                 // 2. Movimento pelo Analógico Esquerdo (Eixos 0 e 1)
-                const AXIS_THRESHOLD = 0.4; // Sensibilidade
+                const AXIS_THRESHOLD = 0.4; // Sensibilidade ajustada
                 const axisX = gamepad.axes[0] || 0; 
                 const axisY = gamepad.axes[1] || 0;
                 
@@ -473,7 +460,7 @@
                     lastMoveTime = now;
                 }
             } else {
-                 // Tenta encontrar um gamepad caso o evento gamepadconnected tenha falhado
+                 // Tenta encontrar um gamepad caso não tenha sido detectado pelo evento
                 for (let i = 0; i < gamepads.length; i++) {
                     if (gamepads[i]) {
                         gamepadIndex = i;
@@ -498,7 +485,7 @@
 
         // Inicia o jogo e o loop de checagem do Gamepad
         resetGame();
-        handleGamepadInput(); // Começa a checagem contínua do gamepad
+        handleGamepadInput();
     </script>
 </body>
 </html>
