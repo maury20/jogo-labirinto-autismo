@@ -219,7 +219,7 @@
             ['#', '#', '#', '#', '#', '#', '#', '#', 'L', '#', '_', '_', '_', '_', '_', '_', '_', 'B', '_', '#'],
             ['#', 'R', '_', '_', 'L', '_', '_', 'R', '#', '#', '_', 'R', '#', 'D', '#', '#', '_', '#', '#', '#'],
             ['#', '#', 'L', '#', '#', '#', '#', '#', '#', 'D', '_', '_', '#', 'G', '_', '_', '_', '_', 'K', '#'],
-            ['#', '_', '_', '_', '_', '_', 'K', '_', '_', '_', '_', '_', '_', 'K', '#', '#', 'L', '#', 'R', '#'],
+            ['#', '_', '_', '_', '_', '_', 'K', '_', '_', '_', '_', '_', '#', 'K', '#', '#', 'L', '#', 'R', '#'],
             ['#', '#', '#', '#', '#', '#', '#', '_', 'R', '#', '#', '#', '#', '_', 'T', '#', '_', '_', '_', '#'],
             ['#', 'G', '_', 'D', '_', '_', 'L', '_', '_', '_', '_', 'L', '#', '_', '#', '#', '_', 'B', '_', '#'],
             ['#', 'L', '#', '#', '_', '#', '#', '#', '#', '#', '#', '#', '#', '_', '_', '#', '_', '_', '_', '_'],
@@ -488,9 +488,9 @@
             if (!focusDefeat) {
                 if (victory) {
                     if (focusValue > 10) { 
-                        messageDisplay.textContent = `VITÓRIA! Você achou Aura com ${focusValue}% de Foco. Reiniciando em 5 segundos...`;
+                        messageDisplay.textContent = `Você achou Aura com ${focusValue}% de Foco. Reiniciando em 5 segundos...`;
                     } else {
-                        messageDisplay.textContent = `Encontro falhou. Foco muito baixo (${focusValue}%). Reiniciando em 5 segundos...`;
+                        messageDisplay.textContent = `falhou. Foco muito baixo (${focusValue}%). Reiniciando em 5 segundos...`;
                     }
                 } 
             }
