@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AURA: O Labirinto do Encontro - Chave e Condição Final</title>
+    <title>AURA: O Labirinto do Encontro - Chave, Foco e Descanso</title>
 
     <style>
-        /* ------------------- CSS OMITIDO PARA BREVIDADE ------------------- */
+        /* ------------------- CSS ------------------- */
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; flex-direction: column; align-items: center; background-color: #f0f8ff; color: #333; padding: 10px; }
         h1 { color: #d0021b; margin-bottom: 5px; font-size: 1.6em; }
         #game-info { display: flex; gap: 40px; margin-bottom: 15px; font-size: 1.1em; padding: 10px 20px; border: 2px solid #ccc; border-radius: 8px; background-color: #fff; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
@@ -20,7 +20,7 @@
         .wall-yellow { background-color: #f8e71c; border: 1px solid #e1d30f; }
         .wall-red { background-color: #d0021b; border: 1px solid #a80017; }
         .wall-green { background-color: #7ed321; border: 1px solid #5fb50d; }
-        
+         
         .door { background-color: #b8860b; border: 1px solid #8b6508; } 
         .locked-door { background-color: #900d0d; border: 2px solid #5a0707; color: white; } 
         .key { background-color: #ffd700; border: 1px solid #ccab00; } 
@@ -59,7 +59,7 @@
     </style>
 </head>
 <body>
-    <h1>AURA: O Labirinto do Encontro (Chave e Foco)</h1>
+    <h1>AURA: O Labirinto do Encontro (Chave, Foco e Descanso)</h1>
     
     <div id="game-info">
         <div id="focus-meter">Foco: <span id="f-value">100</span>%</div>
@@ -68,9 +68,9 @@
     </div>
 
     <div id="maze-container">
-        </div>
+    </div>
     
-    <p class="instructions">Use as setas. Você precisa da Chave (🔑) para abrir a Porta Trancada (L)! Para vencer, o Foco deve ser >50%.</p>
+    <p class="instructions">Use as setas. Sofás (🛋️) e Camas (🛌) recarregam seu Foco! Você precisa da Chave (🔑) para abrir a Porta Trancada (L)! Para vencer, o Foco deve ser >50%.</p>
 
     <script>
         /* ------------------------------------- */
@@ -89,9 +89,9 @@
         const EMOJI_CALM = '🧘'; 
         const EMOJI_RETREAT = '😠'; 
 
-        // --- 1. Definição do Mapa EXTREMO (18x18) ---
-        // L: Porta Trancada, K: Chave
-        const CURRENT_MAP = [
+        // --- 1. Definição do Mapa ORIGINAL (18x18) ---
+        // ESTE MAPA É CONSTANTE E USADO APENAS PARA REINICIAR O JOGO
+        const ORIGINAL_MAP = [
             // C1 C2 C3 C4 C5 C6 C7 C8 C9 C10 C11 C12 C13 C14 C15 C16 C17 C18
             ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'], // L1
             ['#', '_', 'N', 'K', '_', '_', '_', '_', '_', 'L', '_', '_', '_', '_', '_', '_', '_', '#'], // L2 (N: SALA DE ESTAR)
@@ -113,7 +113,10 @@
             ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#']  // L18
         ];
 
-        // Mapeamento dos nomes dos cômodos (Omitido por brevidade)
+        // VARIÁVEL QUE SOFRE ALTERAÇÕES DURANTE O JOGO
+        let CURRENT_MAP; 
+        
+        // Mapeamento dos nomes dos cômodos
         const ROOM_NAMES_SALA = {
             '2,1': 'SALA DE ESTAR', '14,5': 'COZINHA', '1,8': 'QUARTO 1', '1,11': 'BANHEIRO', '3,14': 'QUARTO 2', '14,16': 'QUARTO AURA'
         };
@@ -124,24 +127,33 @@
         let auraPos = { x: 17, y: 16 }; 
         let hasKey = false; 
         
-        // Elementos DOM (Omitido por brevidade)
+        // Elementos DOM
         const mazeContainer = document.getElementById('maze-container');
         const focusMeterDisplay = document.getElementById('f-value');
         const auraSignalDisplay = document.querySelector('#aura-signal span');
         const keyStatusDisplay = document.querySelector('#key-status span'); 
         
-        const mapHeight = CURRENT_MAP.length; 
-        const mapWidth = CURRENT_MAP[0].length; 
+        const mapHeight = ORIGINAL_MAP.length; 
+        const mapWidth = ORIGINAL_MAP[0].length; 
         
         const wallColors = ['wall-blue', 'wall-yellow', 'wall-red', 'wall-green'];
         let currentColorIndex = 0; 
         
-        // --- FUNÇÕES DE ATUALIZAÇÃO E FEEDBACK (MANTIDAS) ---
+        // --- FUNÇÃO PARA COPIAR O MAPA ---
+        function copyMap(map) {
+            // Cria uma cópia profunda (Deep Copy) para resetar o jogo corretamente
+            return map.map(row => [...row]);
+        }
+        
+        // --- FUNÇÕES DE ATUALIZAÇÃO E FEEDBACK ---
         function updateFocus(change) {
             focusValue = Math.min(100, Math.max(0, focusValue + change));
             focusMeterDisplay.textContent = focusValue;
             if (focusValue <= 20) { focusMeterDisplay.style.color = 'red'; } else { focusMeterDisplay.style.color = '#d0021b'; }
-            if (focusValue === 0) { alert("O Foco se esgotou! Reinicie a busca."); resetGame(); }
+            if (focusValue === 0) { 
+                alert("O Foco se esgotou! Reinicie a busca."); 
+                resetGame(); 
+            }
         }
         
         function updateKeyStatus() { 
@@ -183,15 +195,13 @@
                         case 'G': tile.classList.add('calm'); tile.textContent = EMOJI_CALM; break;
                         case 'R': tile.classList.add('retreat'); tile.textContent = EMOJI_RETREAT; break; 
                         case 'A': tile.classList.add('end'); tile.textContent = EMOJI_AURA; auraPos = {x: x, y: y}; break;
-                        case 'M': playerPos = { x: x, y: y }; tile.classList.add('start'); break;
+                        case 'M': tile.classList.add('start'); break; 
                         case '_': default: tile.classList.add('path'); break;
                     }
                     mazeContainer.appendChild(tile);
                 }
             }
             placePlayer();
-            updateAuraSignal();
-            updateKeyStatus(); 
         }
 
         function placePlayer() {
@@ -202,15 +212,16 @@
                 
                 const tileType = CURRENT_MAP[oldPlayerTile.dataset.y][oldPlayerTile.dataset.x];
                 
+                // Redesenha o conteúdo original do tile anterior, se for um item permanente
                 if (tileType === 'S') { oldPlayerTile.textContent = EMOJI_SOFA; }
                 else if (tileType === 'B') { oldPlayerTile.textContent = EMOJI_BED; }
                 else if (tileType === 'T') { oldPlayerTile.textContent = EMOJI_TABLE; }
                 else if (tileType === 'D') { oldPlayerTile.textContent = EMOJI_DOOR; }
                 else if (tileType === 'L') { oldPlayerTile.textContent = EMOJI_LOCKED_DOOR; }
-                else if (tileType === 'K') { oldPlayerTile.textContent = EMOJI_KEY; }
                 else if (tileType === 'A') { oldPlayerTile.textContent = EMOJI_AURA; }
                 else if (tileType === 'G') { oldPlayerTile.textContent = EMOJI_CALM; } 
                 else if (tileType === 'R') { oldPlayerTile.textContent = EMOJI_RETREAT; } 
+                else if (tileType === 'M') { oldPlayerTile.textContent = ''; }
             }
             
             const newPlayerTile = document.querySelector(`[data-x="${playerPos.x}"][data-y="${playerPos.y}"]`);
@@ -220,7 +231,7 @@
             }
         }
 
-        // --- 4. Lógica de Movimento e Interações ---
+        // --- 4. Lógica de Movimento e Interações (ATUALIZADA) ---
         function movePlayer(dx, dy) {
             const newX = playerPos.x + dx;
             const newY = playerPos.y + dy;
@@ -229,61 +240,76 @@
 
             const nextTile = CURRENT_MAP[newY][newX];
 
-            // 1. Bloqueios Fixos
-            if (nextTile === 'S' || nextTile === 'B' || nextTile === 'T' || nextTile === '#' || nextTile === 'D') {
-                updateFocus(-10); 
+            // 1. Bloqueios Fixos (Itens que causam perda de 10 e bloqueiam o movimento)
+            // Paredes (#), Mesa (T) e Porta (D) permanecem como bloqueios/perda de Foco.
+            if (nextTile === '#' || nextTile === 'T' || nextTile === 'D') {
+                updateFocus(-10); // Penalidade por colisão
                 return; 
             }
             
-            // 1b. Bloqueio de Porta Trancada (L)
+            // 1b. Interação com Sofá (S): Pequeno descanso (Ganha Foco, mas não se move)
+            if (nextTile === 'S') {
+                updateFocus(5); 
+                return; // Não se move, apenas recupera foco.
+            }
+
+            // 1c. Interação com Cama (B): Grande descanso (Ganha Foco, mas não se move)
+            if (nextTile === 'B') {
+                updateFocus(15); 
+                return; // Não se move, apenas recupera foco.
+            }
+            
+            // 1d. Bloqueio de Porta Trancada (L)
             if (nextTile === 'L') {
                 if (hasKey) {
                     hasKey = false; 
-                    CURRENT_MAP[newY][newX] = '_'; 
+                    CURRENT_MAP[newY][newX] = '_'; // Destranca a porta
                     updateKeyStatus();
                     
-                    // Continua o movimento no mesmo passo
+                    // Permite o movimento no mesmo passo
                     playerPos.x = newX;
                     playerPos.y = newY;
                     placePlayer();
-                    updateFocus(-1); 
+                    drawMaze(CURRENT_MAP); // Redesenha a porta como caminho livre
+                    updateFocus(-1); // Custo normal de movimento
                     updateAuraSignal();
                     return; 
                 } else {
-                    updateFocus(-10); 
+                    updateFocus(-10); // Penalidade por tentar abrir porta trancada
                     alert("Esta porta está trancada! Você precisa da Chave (🔑) para passar.");
                     return;
                 }
             }
 
-
             // 2. Colisão com Recuo Emocional (R)
             if (nextTile === 'R') {
-                updateFocus(-20); 
+                updateFocus(-20); // Consequência: Perda de 20%
                 const backX = playerPos.x - (dx * 3);
                 const backY = playerPos.y - (dy * 3);
                 playerPos.x = Math.min(mapWidth - 1, Math.max(0, backX));
                 playerPos.y = Math.min(mapHeight - 1, Math.max(0, backY));
                 placePlayer(); 
+                updateAuraSignal();
                 return; 
             }
 
             // 3. Ponto de Calma (G)
-            if (nextTile === 'G') { updateFocus(5); }
+            if (nextTile === 'G') { 
+                updateFocus(5); // Benefício: Ganho de 5%
+            }
             
             // 3b. Coletar Chave (K)
             if (nextTile === 'K') {
                 hasKey = true;
                 CURRENT_MAP[newY][newX] = '_'; // Remove a chave do mapa
                 updateKeyStatus();
-                // O alerta é opcional para não quebrar o fluxo rápido.
             }
             
-            // 4. Atualizar Posição (para K, G, _, N)
+            // 4. Atualizar Posição (Para tiles _, K, G, N, M, A)
             playerPos.x = newX;
             playerPos.y = newY;
             placePlayer();
-            updateFocus(-1); 
+            updateFocus(-1); // Custo normal de movimento
             updateAuraSignal();
 
             // 5. Verificação de Condição de Vitória (A = Aura)
@@ -293,21 +319,43 @@
         function gameOver(victory) {
             if (victory) {
                 if (focusValue > 50) { 
-                    alert(`VITÓRIA! Você encontrou a Menina (Aura) com Foco de ${focusValue}%. Missão Cumprida!`);
+                    alert(`VITÓRIA! 🎉 Você encontrou a Menina (Aura) com Foco de ${focusValue}%. Missão Cumprida!`);
                 } else {
-                     alert(`Você encontrou a Menina (Aura), mas seu Foco (${focusValue}%) está muito baixo (abaixo de 50%). Você precisa de mais Calma (🧘) para se conectar.`);
+                    alert(`Você encontrou a Menina (Aura), mas seu Foco (${focusValue}%) está muito baixo (abaixo de 50%). Você precisa de mais Calma (🧘) para se conectar.`);
                 }
             }
+            // Reinicia o jogo após um breve delay
             setTimeout(resetGame, 100);
         }
         
+        // --- 6. REINICIALIZAÇÃO DO JOGO (MELHORADA) ---
         function resetGame() {
-             focusValue = 100;
-             hasKey = false;
-             drawMaze(CURRENT_MAP); 
+            focusValue = 100;
+            hasKey = false;
+            
+            // 1. Carrega uma nova CÓPIA do mapa original
+            CURRENT_MAP = copyMap(ORIGINAL_MAP); 
+
+            // 2. Localiza o ponto 'M' (Start) no novo mapa e define a posição inicial
+            let startFound = false;
+            for (let y = 0; y < mapHeight; y++) {
+                for (let x = 0; x < mapWidth; x++) {
+                    if (CURRENT_MAP[y][x] === 'M') {
+                        playerPos = { x: x, y: y };
+                        startFound = true;
+                        break;
+                    }
+                }
+                if (startFound) break;
+            }
+
+            // 3. Desenha o labirinto e atualiza o HUD
+            drawMaze(CURRENT_MAP); 
+            updateKeyStatus(); 
+            updateAuraSignal(); 
         }
 
-        // --- 5. Event Listener para Teclas (Movimentação) ---
+        // --- 7. Event Listener para Teclas (Movimentação) ---
         document.addEventListener('keydown', (e) => {
             switch (e.key) {
                 case 'ArrowUp': movePlayer(0, -1); break;
@@ -317,9 +365,8 @@
             }
         });
 
-        // Inicia o jogo
-        drawMaze(CURRENT_MAP);
+        // Inicia o jogo chamando a função de reset
+        resetGame();
     </script>
 </body>
 </html>
-
