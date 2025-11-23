@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AURA: O Labirinto do Encontro - Chave e Condição Final</title>
+    <title>AURA</title>
 
     <style>
         /* ------------------- CSS OMITIDO PARA BREVIDADE ------------------- */
@@ -62,8 +62,8 @@
     <h1>AURA: O Labirinto do Encontro (Chave e Foco)</h1>
     
     <div id="game-info">
-        <div id="focus-meter">Foco: <span id="f-value">100</span>%</div>
-        <div id="aura-signal">Sinal da Menina: <span>🟢 Distante</span></div>
+        <div id="focus-meter">Foco: <span id="f-value">200</span>%</div>
+        <div id="aura-signal">Sinal da pulseira: <span>🟢 Distante</span></div>
         <div id="key-status">Chave (K): <span>🔴 Ausente</span></div>
     </div>
 
@@ -295,10 +295,10 @@
                 if (focusValue > 50) { 
                     alert(`VITÓRIA! Você encontrou a Menina (Aura) com Foco de ${focusValue}%. Missão Cumprida!`);
                 } else {
-                     alert(`Você encontrou a Menina (Aura), mas seu Foco (${focusValue}%) está muito baixo (abaixo de 50%). Você precisa de mais Calma (🧘) para se conectar.`);
+                     alert(`Você encontrou a Menina (Aura), mas seu Foco (${focusValue}%) está muito baixo (abaixo de 50%).`);
                 }
             }
-            setTimeout(resetGame, 100);
+            setTimeout(resetGame, 200);
         }
         
         function resetGame() {
