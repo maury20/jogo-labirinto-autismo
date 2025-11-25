@@ -7,9 +7,28 @@
 
     <style>
         /* ------------------- CSS ------------------- */
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; flex-direction: column; align-items: center; background-color: #f0f8ff; color: #333; padding: 10px; }
-        h1 { color: #d0021b; margin-bottom: 5px; font-size: 1.6em; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            background-color: #f0f8ff; 
+            color: #333; 
+            padding: 10px; 
+        }
+        h1 { 
+            color: #d0021b; 
+            margin-bottom: 5px; 
+            font-size: 1.6em; 
+        }
         
+        /* Estilo para o logo */
+        #game-logo {
+            width: 150px; /* Ajuste o tamanho conforme necessário */
+            height: auto;
+            margin-bottom: 20px;
+        }
+
         /* Estilo para o seletor de dificuldade */
         #difficulty-selector {
             margin-bottom: 20px;
@@ -49,10 +68,23 @@
             transform: scale(1.05);
         }
         
-        #game-info { display: flex; gap: 40px; margin-bottom: 15px; font-size: 1.1em; padding: 10px 20px; border: 2px solid #ccc; border-radius: 8px; background-color: #fff; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+        #game-info { 
+            display: flex; 
+            gap: 40px; 
+            margin-bottom: 15px; 
+            font-size: 1.1em; 
+            padding: 10px 20px; 
+            border: 2px solid #ccc; 
+            border-radius: 8px; 
+            background-color: #fff; 
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); 
+        }
         #focus-meter { color: #d0021b; font-weight: bold; }
         #aura-signal { font-weight: bold; }
         #key-status { font-weight: bold; color: #b8860b; } 
+        #game-timer { font-weight: bold; color: #007bff; } /* Novo estilo para o timer */
+        #game-score { font-weight: bold; color: #4CAF50; } /* Novo estilo para a pontuação */
+
         #message-display { 
             height: 30px; 
             color: #d0021b; 
@@ -78,8 +110,17 @@
             #maze-container { grid-template-columns: repeat(20, 25px); grid-template-rows: repeat(20, 25px); }
         }
 
-
-        .tile { width: 30px; height: 30px; box-sizing: border-box; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 1.2em; transition: background-color 0.1s; }
+        .tile { 
+            width: 30px; 
+            height: 30px; 
+            box-sizing: border-box; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            font-weight: bold; 
+            font-size: 1.2em; 
+            transition: background-color 0.1s; 
+        }
 
         /* Estilos dos elementos do mapa */
         .wall-blue { background-color: #4a90e2; border: 1px solid #357ae8; }
@@ -126,6 +167,7 @@
 </head>
 <body>
     <h1>AURA - O Desafio do Foco</h1>
+    <img id="game-logo" src="logo inovatec.png" alt="Logo Inovatec">
     
     <div id="difficulty-selector">
         <button id="btn-easy" class="btn-easy" data-level="FACIL">Fácil (18x18)</button>
@@ -138,6 +180,8 @@
         <div id="focus-meter">Foco: <span id="f-value">100</span>%</div>
         <div id="aura-signal">Sinal da Pulseira: <span>🔴 Distante</span></div>
         <div id="key-status">Chave (K): <span>🔴 Ausente</span></div>
+        <div id="game-timer">Tempo: <span id="timer-value">00:00</span></div>
+        <div id="game-score">Pontuação: <span id="score-value">0</span></div>
     </div>
     
     <div id="message-display"></div>
@@ -146,8 +190,8 @@
     </div>
     
     <p class="instructions">
-          
-          **Status do Controle:** <span id="gamepad-status">🛑 Desconectado</span>.
+        **Instruções:** Use **Setas/WASD** ou **Gamepad (D-Pad/Analógico Esquerdo)** para mover.
+        **Status do Controle:** <span id="gamepad-status">🛑 Desconectado</span>.
     </p>
 
     <script>
@@ -169,102 +213,102 @@
 
         // --- 1. Definição dos Mapas de Dificuldade ---
         
-        // Mapa 1: Fácil (Antigo EASY_MAP_ORIGINAL)
+        // Mapa 1: Fácil (18x18)
         const MAP_EASY_CALM = [
-            ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'], 
-            ['#', '_', 'N', 'K', '_', '_', '_', '_', '_', 'L', '_', '_', '_', '_', '_', '_', '_', '#'], 
-            ['#', '_', '_', '_', 'S', '_', '_', 'S', '_', '#', 'K', '#', '#', '#', '#', '#', '#', '#'], 
-            ['#', 'M', '#', '#', '#', '#', '#', '#', 'D', '#', '_', '#', '_', '_', 'G', 'K', '_', '#'], 
-            ['#', '_', 'K', '_', '_', '_', '_', '_', '_', 'L', '_', '#', '_', '#', '#', '#', 'L', '#'], 
-            ['#', '#', '#', 'L', '#', '#', '#', '#', 'L', '#', '_', 'L', '_', '#', 'N', '_', '_', '#'], 
-            ['#', '_', '_', '_', '_', '#', 'B', '_', '_', '_', 'K', '#', '_', '#', '_', '#', '_', '#'], 
-            ['#', '_', '#', '#', '#', '#', '_', 'L', '#', '#', '#', '#', 'T', '#', '_', '#', 'K', 'D'], 
-            ['#', 'N', '#', '_', '_', 'K', '_', '#', '_', '_', '_', '_', '_', '_', '_', '#', '_', '#'], 
-            ['#', '#', '#', 'L', '#', '#', '#', '#', 'D', '#', 'G', '_', '_', '#', 'R', '_', '_', '#'], 
-            ['#', '_', '_', '_', '_', '_', '_', 'K', '_', '#', '_', '#', 'K', '#', '#', '#', 'L', '#'], 
-            ['#', 'N', '#', '#', '#', '#', '#', '#', 'L', '#', '_', '#', '_', '#', 'B', 'K', '_', '#'], 
-            ['#', 'K', 'G', '_', '_', '_', '_', '_', '_', '_', '_', '#', '_', '#', '#', 'L', '#', '#'], 
-            ['#', '#', '#', '#', '#', 'L', '#', '#', '#', '#', '#', '#', '_', '_', '_', '_', '_', '#'], 
-            ['#', 'D', '_', 'N', '_', '_', '_', 'K', '_', '_', 'L', '#', '#', 'L', '#', '#', '#', '#'], 
-            ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '_', 'G', '#', '_', '_', '_', '_', 'A'], 
-            ['#', 'G', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '#', '_', '_', '_', '_', '#'], 
-            ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'] 
-        ];
+            ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'], 
+            ['#', '_', 'N', 'K', '_', '_', '_', '_', '_', 'L', '_', '_', '_', '_', '_', '_', '_', '#'], 
+            ['#', '_', '_', '_', 'S', '_', '_', 'S', '_', '#', 'K', '#', '#', '#', '#', '#', '#', '#'], 
+            ['#', 'M', '#', '#', '#', '#', '#', '#', 'D', '#', '_', '#', '_', '_', 'G', 'K', '_', '#'], 
+            ['#', '_', 'K', '_', '_', '_', '_', '_', '_', 'L', '_', '#', '_', '#', '#', '#', 'L', '#'], 
+            ['#', '#', '#', 'L', '#', '#', '#', '#', 'L', '#', '_', 'L', '_', '#', 'N', '_', '_', '#'], 
+            ['#', '_', '_', '_', '_', '#', 'B', '_', '_', '_', 'K', '#', '_', '#', '_', '#', '_', '#'], 
+            ['#', '_', '#', '#', '#', '#', '_', 'L', '#', '#', '#', '#', 'T', '#', '_', '#', 'K', 'D'], 
+            ['#', 'N', '#', '_', '_', 'K', '_', '#', '_', '_', '_', '_', '_', '_', '_', '#', '_', '#'], 
+            ['#', '#', '#', 'L', '#', '#', '#', '#', 'D', '#', 'G', '_', '_', '#', 'R', '_', '_', '#'], 
+            ['#', '_', '_', '_', '_', '_', '_', 'K', '_', '#', '_', '#', 'K', '#', '#', '#', 'L', '#'], 
+            ['#', 'N', '#', '#', '#', '#', '#', '#', 'L', '#', '_', '#', '_', '#', 'B', 'K', '_', '#'], 
+            ['#', 'K', 'G', '_', '_', '_', '_', '_', '_', '_', '_', '#', '_', '#', '#', 'L', '#', '#'], 
+            ['#', '#', '#', '#', '#', 'L', '#', '#', '#', '#', '#', '#', '_', '_', '_', '_', '_', '#'], 
+            ['#', 'D', '_', 'N', '_', '_', '_', 'K', '_', '_', 'L', '#', '#', 'L', '#', '#', '#', '#'], 
+            ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '_', 'G', '#', '_', '_', '_', '_', 'A'], 
+            ['#', 'G', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '#', '_', '_', '_', '_', '#'], 
+            ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'] 
+        ];
 
-        // Mapa 2: Médio (Novo mapa)
+        // Mapa 2: Médio (20x20)
         const MAP_MEDIUM_FOG = [
-            ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
-            ['#', 'M', '_', '_', 'R', '#', '_', '_', '_', '_', '_', 'L', '_', '_', '_', '_', '_', '_', '_', '#'],
-            ['#', '#', '#', '_', '#', '#', 'L', '#', 'B', '#', '#', '#', '#', 'L', '#', '#', '#', '#', '#', '#'],
-            ['#', '_', 'K', '_', 'R', '_', '_', '#', '_', '_', '_', '_', 'K', '_', '_', '_', '_', '_', '_', '#'],
-            ['#', '_', '#', '#', '#', '#', '#', '#', '#', 'D', '#', '#', '#', 'R', '#', 'R', '#', '#', 'D', '#'],
-            ['#', '_', '#', 'S', '_', '_', 'K', '_', '_', '_', 'G', '_', '_', '_', '_', '_', 'L', '_', '_', '#'],
-            ['#', 'L', '#', 'K', '#', 'L', '#', '#', 'T', '#', '#', '#', '#', '#', '#', '#', '#', '#', 'R', '#'],
-            ['#', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', 'G', '_', 'K', '#'],
-            ['#', 'R', '#', '#', '#', 'L', '#', '#', '#', '#', 'D', '#', '#', '#', 'L', '#', '#', '#', '#', '#'],
-            ['#', '_', '_', 'K', '_', '_', 'G', '_', '_', 'R', '_', '_', '_', '_', '_', '_', '_', '_', '_', '#'],
-            ['#', '#', '#', '#', '#', '_', '#', '#', '#', '#', 'K', 'L', '#', '#', 'R', '#', '#', '#', '#', '#'],
-            ['#', 'S', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', 'K', '_', '#'],
-            ['#', '#', '#', 'R', '#', '#', '#', '#', 'L', '#', 'G', '#', 'L', '#', 'D', 'K', '#', '#', '#', '#'],
-            ['#', '_', '_', '_', '_', '_', '_', 'K', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', 'L', '#'],
-            ['#', 'L', '#', '#', '#', '#', '#', '#', '#', '#', '#', 'R', '#', '#', 'L', '#', '#', '#', '#', '#'],
-            ['#', '_', 'B', '_', '_', '_', 'G', '_', '_', '_', 'S', '_', '_', '_', '_', '_', 'K', '_', '_', '#'],
-            ['#', '#', '#', '#', '#', 'R', '#', '#', '#', 'D', '#', '#', '#', '#', '#', 'L', '#', '#', 'D', '#'],
-            ['#', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', 'R', '_', '_', '_', '_', '_', 'A', '#'],
-            ['#', '#', 'L', '#', '#', '#', '#', 'L', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
-            ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#']
-        ];
+            ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+            ['#', 'M', '_', '_', 'R', '#', '_', '_', '_', '_', '_', 'L', '_', '_', '_', '_', '_', '_', '_', '#'],
+            ['#', '#', '#', '_', '#', '#', 'L', '#', 'B', '#', '#', '#', '#', 'L', '#', '#', '#', '#', '#', '#'],
+            ['#', '_', 'K', '_', 'R', '_', '_', '#', '_', '_', '_', '_', 'K', '_', '_', '_', '_', '_', '_', '#'],
+            ['#', '_', '#', '#', '#', '#', '#', '#', '#', 'D', '#', '#', '#', 'R', '#', 'R', '#', '#', 'D', '#'],
+            ['#', '_', '#', 'S', '_', '_', 'K', '_', '_', '_', 'G', '_', '_', '_', '_', '_', 'L', '_', '_', '#'],
+            ['#', 'L', '#', 'K', '#', 'L', '#', '#', 'T', '#', '#', '#', '#', '#', '#', '#', '#', '#', 'R', '#'],
+            ['#', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', 'G', '_', 'K', '#'],
+            ['#', 'R', '#', '#', '#', 'L', '#', '#', '#', '#', 'D', '#', '#', '#', 'L', '#', '#', '#', '#', '#'],
+            ['#', '_', '_', 'K', '_', '_', 'G', '_', '_', 'R', '_', '_', '_', '_', '_', '_', '_', '_', '_', '#'],
+            ['#', '#', '#', '#', '#', '_', '#', '#', '#', '#', 'K', 'L', '#', '#', 'R', '#', '#', '#', '#', '#'],
+            ['#', 'S', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', 'K', '_', '#'],
+            ['#', '#', '#', 'R', '#', '#', '#', '#', 'L', '#', 'G', '#', 'L', '#', 'D', 'K', '#', '#', '#', '#'],
+            ['#', '_', '_', '_', '_', '_', '_', 'K', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', 'L', '#'],
+            ['#', 'L', '#', '#', '#', '#', '#', '#', '#', '#', '#', 'R', '#', '#', 'L', '#', '#', '#', '#', '#'],
+            ['#', '_', 'B', '_', '_', '_', 'G', '_', '_', '_', 'S', '_', '_', '_', '_', '_', 'K', '_', '_', '#'],
+            ['#', '#', '#', '#', '#', 'R', '#', '#', '#', 'D', '#', '#', '#', '#', '#', 'L', '#', '#', 'D', '#'],
+            ['#', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', 'R', '_', '_', '_', '_', '_', 'A', '#'],
+            ['#', '#', 'L', '#', '#', '#', '#', 'L', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+            ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#']
+        ];
 
 
-        // Mapa 3: Difícil (Antigo MASTER_MAP_CRITICISM)
+        // Mapa 3: Difícil (20x20)
         const MAP_HARD_CRITICISM = [
-            ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
-            ['#', 'M', '#', '#', 'K', 'L', '_', '_', '_', '#', 'R', '_', '_', 'K', '_', '_', '_', '_', '_', '#'],
-            ['#', '_', '_', '_', '_', '_', '_', '#', 'R', '#', '#', '#', '#', '#', '#', '#', '#', '#', 'L', '#'],
-            ['#', 'L', '#', '#', 'R', '#', '#', '#', '_', 'B', '_', '_', '_', '_', '_', 'D', '_', '#', '_', '#'],
-            ['#', '_', '#', 'G', '_', '_', 'T', '#', 'S', '#', '#', '#', 'L', '#', '#', 'K', '#', '#', 'K', '#'],
-            ['#', '_', '#', '#', '#', '#', 'K', '#', '_', '_', '_', '_', '_', '_', '_', '_', 'G', 'R', '_', '#'],
-            ['#', '_', '_', '_', '_', '_', '_', 'L', '_', '#', 'D', '#', 'R', '#', '#', 'L', '#', '#', '#', '#'],
-            ['#', '#', '#', '#', '#', '#', 'R', '#', 'G', '_', '_', '_', 'L', '_', '_', '_', '_', 'K', '_', '#'],
-            ['#', 'K', '_', '_', '_', '_', '_', '#', '#', 'K', '#', '#', '_', '#', '#', '#', '#', '#', 'D', '#'],
-            ['#', '#', '#', 'L', '#', '#', '#', '#', 'T', '_', '_', '_', '_', '_', '_', '_', 'R', '_', '_', '#'],
-            ['#', 'S', '_', '_', '_', '_', 'G', '_', '_', '_', '#', '#', '#', 'L', '#', 'L', '#', '#', 'L', '#'],
-            ['#', '#', '#', '#', '#', '#', '#', '#', 'L', '#', '_', '_', '_', '_', '_', '_', '_', 'B', '_', '#'],
-            ['#', 'R', '_', '_', 'L', '_', '_', 'R', '#', '#', '_', 'R', '#', 'D', '#', '#', '_', '#', '#', '#'],
-            ['#', '#', 'L', '#', '#', '#', '#', '#', '#', 'D', '_', '_', '#', 'G', '_', '_', '_', '_', 'K', '#'],
-            ['#', '_', '_', '_', '_', '_', 'K', '_', '_', '_', '_', '_', '#', 'K', '#', '#', 'L', '#', 'R', '#'],
-            ['#', '#', '#', '#', '#', '#', '#', '_', 'R', '#', '#', '#', '#', '_', 'T', '#', '_', '_', '_', '#'],
-            ['#', 'G', '_', 'D', '_', '_', 'L', '_', '_', '_', '_', 'L', '#', '_', '#', '#', '_', 'B', '_', '#'],
-            ['#', 'L', '#', '#', '_', '#', '#', '#', '#', '#', '#', '#', '#', '_', '_', '#', '_', '_', '_', '_'],
-            ['#', 'R', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '#', '#', '#', '#', '#', 'A'],
-            ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#']
-        ];
+            ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+            ['#', 'M', '#', '#', 'K', 'L', '_', '_', '_', '#', 'R', '_', '_', 'K', '_', '_', '_', '_', '_', '#'],
+            ['#', '_', '_', '_', '_', '_', '_', '#', 'R', '#', '#', '#', '#', '#', '#', '#', '#', '#', 'L', '#'],
+            ['#', 'L', '#', '#', 'R', '#', '#', '#', '_', 'B', '_', '_', '_', '_', '_', 'D', '_', '#', '_', '#'],
+            ['#', '_', '#', 'G', '_', '_', 'T', '#', 'S', '#', '#', '#', 'L', '#', '#', 'K', '#', '#', 'K', '#'],
+            ['#', '_', '#', '#', '#', '#', 'K', '#', '_', '_', '_', '_', '_', '_', '_', '_', 'G', 'R', '_', '#'],
+            ['#', '_', '_', '_', '_', '_', '_', 'L', '_', '#', 'D', '#', 'R', '#', '#', 'L', '#', '#', '#', '#'],
+            ['#', '#', '#', '#', '#', '#', 'R', '#', 'G', '_', '_', '_', 'L', '_', '_', '_', '_', 'K', '_', '#'],
+            ['#', 'K', '_', '_', '_', '_', '_', '#', '#', 'K', '#', '#', '_', '#', '#', '#', '#', '#', 'D', '#'],
+            ['#', '#', '#', 'L', '#', '#', '#', '#', 'T', '_', '_', '_', '_', '_', '_', '_', 'R', '_', '_', '#'],
+            ['#', 'S', '_', '_', '_', '_', 'G', '_', '_', '_', '#', '#', '#', 'L', '#', 'L', '#', '#', 'L', '#'],
+            ['#', '#', '#', '#', '#', '#', '#', '#', 'L', '#', '_', '_', '_', '_', '_', '_', '_', 'B', '_', '#'],
+            ['#', 'R', '_', '_', 'L', '_', '_', 'R', '#', '#', '_', 'R', '#', 'D', '#', '#', '_', '#', '#', '#'],
+            ['#', '#', 'L', '#', '#', '#', '#', '#', '#', 'D', '_', '_', '#', 'G', '_', '_', '_', '_', 'K', '#'],
+            ['#', '_', '_', '_', '_', '_', 'K', '_', '_', '_', '_', '_', '#', 'K', '#', '#', 'L', '#', 'R', '#'],
+            ['#', '#', '#', '#', '#', '#', '#', '_', 'R', '#', '#', '#', '#', '_', 'T', '#', '_', '_', '_', '#'],
+            ['#', 'G', '_', 'D', '_', '_', 'L', '_', '_', '_', '_', 'L', '#', '_', '#', '#', '_', 'B', '_', '#'],
+            ['#', 'L', '#', '#', '_', '#', '#', '#', '#', '#', '#', '#', '#', '_', '_', '#', '_', '_', '_', '_'],
+            ['#', 'R', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '#', '#', '#', '#', '#', 'A'],
+            ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#']
+        ];
 
 
-        // Mapa 4: Mestre (Antigo IMPOSSIBLE_MAP_BURNOUT)
+        // Mapa 4: Mestre (20x20)
         const MAP_MASTER_BURNOUT = [
-       
-            ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
-            ['#', 'M', 'K', '#', 'K', 'L', '_', '_', 'R', '#', 'L', '_', '_', '_', 'R', '#', 'G', '_', 'L', '#'],
-            ['#', '_', '_', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
-            ['#', 'R', '_', 'L', '_', '_', 'G', 'R', '_', 'T', '_', 'D', 'R', 'L', '_', 'K', '_', 'R', 'D', '#'],
-            ['#', '#', '#', '#', '_', 'R', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
-            ['#', 'L', '_', '_', 'K', '_', '_', '_', '_', 'S', '_', 'R', '_', 'T', '_', 'R', '_', 'L', '_', '#'],
-            ['#', '#', '#', 'R', '#', '#', '#', 'L', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
-            ['#', '_', '_', '_', '_', 'R', '_', '_', '_', 'G', '_', '_', '_', '_', '_', 'D', '_', 'R', '_', '#'],
-            ['#', 'L', '#', '#', 'T', '#', '#', '#', '_', '#', '#', 'L', '#', 'R', '#', '#', '#', '#', '#', '#'],
-            ['#', '_', '_', '_', 'L', '_', '_', 'K', '_', '_', 'R', '_', 'T', '_', '_', '_', 'G', 'L', '_', '#'],
-            ['#', '#', '#', 'R', '#', '#', 'L', '#', '#', 'L', '#', '#', '#', '#', '#', 'R', '#', '#', '#', '#'],
-            ['#', 'G', '_', 'L', '_', 'K', '_', '_', 'k', '_', 'D', '_', '_', 'L', '_', '_', '_', '_', 'K', '#'],
-            ['#', '#', '_', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', 'L', '#', '#', '#'],
-            ['#', 'L', '_', '_', 'R', '_', 'K', '_', 'G', '_', 'L', '_', '_', 'R', '_', 'B', '_', '_', 'D', '#'],
-            ['#', '#', '#', '_', '#', '#', '#', 'L', '#', '#', '#', '#', '#', '#', '#', '#', '#', 'R', '#', '#'],
-            ['#', 'R', '_', '_', '_', '_', '_', '_', '_', 'D', 'R', '_', 'S', '_', 'L', '_', '_', '_', '_', '#'],
-            ['#', '#', 'L', '#', 'R', '#', '#', 'K', '#', '#', '#', '#', 'K', '#', '#', '#', '#', '#', 'R', '#'],
-            ['#', 'K', '_', '_', '_', '_', 'G', '_', '_', '_', 'L', '_', '_', 'T', '_', 'K', '_', 'L', '_', 'A'],
-            ['#', 'R', '#', '#', '#', 'R', '#', '#', '#', 'D', '#', 'R', '_', 'L', '_', '#', '#', '#', '#', '#'],
-            ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#']
-        ];
+        
+            ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+            ['#', 'M', 'K', '#', 'K', 'L', '_', '_', 'R', '#', 'L', '_', '_', '_', 'R', '#', 'G', '_', 'L', '#'],
+            ['#', '_', '_', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+            ['#', 'R', '_', 'L', '_', '_', 'G', 'R', '_', 'T', '_', 'D', 'R', 'L', '_', 'K', '_', 'R', 'D', '#'],
+            ['#', '#', '#', '#', '_', 'R', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+            ['#', 'L', '_', '_', 'K', '_', '_', '_', '_', 'S', '_', 'R', '_', 'T', '_', 'R', '_', 'L', '_', '#'],
+            ['#', '#', '#', 'R', '#', '#', '#', 'L', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+            ['#', '_', '_', '_', '_', 'R', '_', '_', '_', 'G', '_', '_', '_', '_', '_', 'D', '_', 'R', '_', '#'],
+            ['#', 'L', '#', '#', 'T', '#', '#', '#', '_', '#', '#', 'L', '#', 'R', '#', '#', '#', '#', '#', '#'],
+            ['#', '_', '_', '_', 'L', '_', '_', 'K', '_', '_', 'R', '_', 'T', '_', '_', '_', 'G', 'L', '_', '#'],
+            ['#', '#', '#', 'R', '#', '#', 'L', '#', '#', 'L', '#', '#', '#', '#', '#', 'R', '#', '#', '#', '#'],
+            ['#', 'G', '_', 'L', '_', 'K', '_', '_', 'k', '_', 'D', '_', '_', 'L', '_', '_', '_', '_', 'K', '#'],
+            ['#', '#', '_', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', 'L', '#', '#', '#'],
+            ['#', 'L', '_', '_', 'R', '_', 'K', '_', 'G', '_', 'L', '_', '_', 'R', '_', 'B', '_', '_', 'D', '#'],
+            ['#', '#', '#', '_', '#', '#', '#', 'L', '#', '#', '#', '#', '#', '#', '#', '#', '#', 'R', '#', '#'],
+            ['#', 'R', '_', '_', '_', '_', '_', '_', '_', 'D', 'R', '_', 'S', '_', 'L', '_', '_', '_', '_', '#'],
+            ['#', '#', 'L', '#', 'R', '#', '#', 'K', '#', '#', '#', '#', 'K', '#', '#', '#', '#', '#', 'R', '#'],
+            ['#', 'K', '_', '_', '_', '_', 'G', '_', '_', '_', 'L', '_', '_', 'T', '_', 'K', '_', 'L', '_', 'A'],
+            ['#', 'R', '#', '#', '#', 'R', '#', '#', '#', 'D', '#', 'R', '_', 'L', '_', '#', '#', '#', '#', '#'],
+            ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#']
+        ];
 
 
         // Agrupa todos os mapas para seleção
@@ -275,7 +319,14 @@
             'MESTRE': MAP_MASTER_BURNOUT
         };
 
-        // Estado inicial de dificuldade é o Mestre
+        // Multiplicadores de pontuação por dificuldade
+        const DIFFICULTY_MULTIPLIERS = {
+            'FACIL': 1,
+            'MEDIO': 1.5,
+            'DIFICIL': 2,
+            'MESTRE': 3
+        };
+
         let currentDifficulty = 'MESTRE';
         let CURRENT_MAP;
         
@@ -292,6 +343,12 @@
         let auraPos = { x: 0, y: 0 }; 
         let hasKey = false; 
         
+        // Variáveis para pontuação e tempo
+        let scoreValue = 0;
+        let gameStartTime = 0;
+        let gameTimerInterval = null;
+        let gameActive = false; // Controla se o jogo está ativo para pausar timer/movimento
+
         // Elementos DOM 
         let mazeContainer;
         let focusMeterDisplay;
@@ -300,13 +357,16 @@
         let messageDisplay; 
         let gamepadStatusDisplay;
         let difficultyButtons;
+        let timerDisplay; 
+        let scoreDisplay; 
         
         const wallColors = ['wall-blue', 'wall-yellow', 'wall-red', 'wall-green'];
         let currentColorIndex = 0; 
         
         let gamepadIndex = null;
         let lastMoveTime = 0;
-        const MOVE_COOLDOWN = 120;
+        const MOVE_COOLDOWN = 120; // 120ms entre movimentos para Gamepad/Teclado
+        let lastKeyPressed = null; // Para evitar repetição de movimento de teclado (autofire)
 
         function copyMap(map) {
             return map.map(row => [...row]);
@@ -322,9 +382,12 @@
             messageDisplay = document.getElementById('message-display'); 
             gamepadStatusDisplay = document.getElementById('gamepad-status');
             difficultyButtons = document.querySelectorAll('#difficulty-selector button');
+            timerDisplay = document.getElementById('timer-value'); 
+            scoreDisplay = document.getElementById('score-value'); 
             
             // 2. Anexar Listener de Teclado
             document.addEventListener('keydown', handleKeydown);
+            document.addEventListener('keyup', handleKeyup); // Para evitar repetição
 
             // 3. Anexar Listeners dos Botões de Dificuldade
             difficultyButtons.forEach(button => {
@@ -334,27 +397,29 @@
                 });
             });
 
-            // 4. Iniciar Jogo no nível padrão
+            // 4. Iniciar Jogo no nível padrão (Mestre)
             setDifficulty(currentDifficulty);
-            handleGamepadInput(); 
+            handleGamepadInput(); // Inicia o loop do Gamepad
         });
 
         /* --- Funções de Jogo e Estado --- */
         
         function updateFocus(change) {
+            if (!gameActive) return;
+
             focusValue = Math.min(100, Math.max(0, focusValue + change));
             focusMeterDisplay.textContent = focusValue;
             
             // LÓGICA DE REINÍCIO (Focus <= 10)
-            if (focusValue <= 10) { 
-                focusValue = Math.max(0, focusValue); 
+            if (focusValue <= 0) { 
+                focusValue = 0;
                 focusMeterDisplay.textContent = focusValue; 
                 focusMeterDisplay.style.color = 'red'; 
-                messageDisplay.textContent = `Foco esgotado! (${focusValue}%) Reiniciando...`; 
+                messageDisplay.textContent = `🚨 Foco esgotado! Game Over. 🚨`; 
                 gameOver(false, true); // Derrota por Foco
                 return;
             } else if (focusValue <= 20) { 
-                 focusMeterDisplay.style.color = 'red'; 
+                    focusMeterDisplay.style.color = 'red'; 
             } else { 
                 focusMeterDisplay.style.color = '#d0021b'; 
             }
@@ -366,293 +431,406 @@
         }
 
         function updateAuraSignal() {
+            if (!auraPos || !playerPos) return;
+
             const distance = Math.abs(playerPos.x - auraPos.x) + Math.abs(playerPos.y - auraPos.y);
             let signalText;
-            if (distance <= 6) { signalText = '🟢 Perto! (Menina próxima)'; auraSignalDisplay.style.color = '#7ed321'; } 
-            else if (distance <= 20) { signalText = '🟡 Médio (Sinal forte)'; auraSignalDisplay.style.color = '#4a90e2'; } 
-            else { signalText = '🔴 Distante (Sinal fraco)'; auraSignalDisplay.style.color = '#f5a623'; }
+            let signalColor;
+
+            if (distance <= 6) { 
+                signalText = '🟢 Perto! (Menina próxima)'; 
+                signalColor = '#7ed321'; 
+            } 
+            else if (distance <= 20) { 
+                signalText = '🟡 Médio (Sinal forte)'; 
+                signalColor = '#4a90e2'; 
+            } 
+            else { 
+                signalText = '🔴 Distante (Fraco)'; 
+                signalColor = '#d0021b'; 
+            }
+
             auraSignalDisplay.textContent = signalText;
+            auraSignalDisplay.style.color = signalColor;
         }
-        
-        function drawMaze(map) {
-            mazeContainer.innerHTML = '';
-            // Atualiza o CSS grid template columns/rows para o tamanho do mapa
-            mapHeight = map.length;
-            mapWidth = map[0].length;
-            mazeContainer.style.gridTemplateColumns = `repeat(${mapWidth}, 30px)`;
-            mazeContainer.style.gridTemplateRows = `repeat(${mapHeight}, 30px)`;
-            
-            for (let y = 0; y < mapHeight; y++) {
-                for (let x = 0; x < mapWidth; x++) {
-                    const tile = document.createElement('div');
-                    tile.classList.add('tile');
-                    tile.dataset.x = x;
-                    tile.dataset.y = y;
 
-                    switch (map[y][x]) {
-                        case '#': tile.classList.add(wallColors[currentColorIndex]); currentColorIndex = (currentColorIndex + 1) % wallColors.length; break;
-                        case 'S': tile.classList.add('sofa'); tile.textContent = EMOJI_SOFA; break;
-                        case 'B': tile.classList.add('bed'); tile.textContent = EMOJI_BED; break;
-                        case 'T': tile.classList.add('table'); tile.textContent = EMOJI_TABLE; break;
-                        case 'D': tile.classList.add('door'); tile.textContent = EMOJI_DOOR; break; 
-                        case 'L': tile.classList.add('locked-door'); tile.textContent = EMOJI_LOCKED_DOOR; break; 
-                        case 'K': tile.classList.add('key'); tile.textContent = EMOJI_KEY; break;
-                        case 'N': tile.classList.add('room-name'); const key = `${x},${y}`; if (ROOM_NAMES_SALA[key]) { tile.textContent = ROOM_NAMES_SALA[key]; } break; 
-                        case 'G': tile.classList.add('calm'); tile.textContent = EMOJI_CALM; break;
-                        case 'R': tile.classList.add('retreat'); tile.textContent = EMOJI_RETREAT; break; 
-                        case 'A': tile.classList.add('end'); tile.textContent = EMOJI_AURA; auraPos = {x: x, y: y}; break;
-                        case 'M': tile.classList.add('start'); break; 
-                        case '_': default: tile.classList.add('path'); break;
-                    }
-                    mazeContainer.appendChild(tile);
+        function updateScore(points) {
+            scoreValue += points;
+            scoreValue = Math.max(0, scoreValue); // Pontuação não pode ser negativa
+            scoreDisplay.textContent = Math.floor(scoreValue);
+        }
+
+        function startTimer() {
+            if (gameTimerInterval) clearInterval(gameTimerInterval);
+            gameStartTime = Date.now();
+
+            gameTimerInterval = setInterval(() => {
+                const elapsedMilliseconds = Date.now() - gameStartTime;
+                const elapsedSeconds = Math.floor(elapsedMilliseconds / 1000);
+                
+                const minutes = String(Math.floor(elapsedSeconds / 60)).padStart(2, '0');
+                const seconds = String(elapsedSeconds % 60).padStart(2, '0');
+                
+                timerDisplay.textContent = `${minutes}:${seconds}`;
+
+                // Penalidade de foco a cada 30 segundos
+                if (elapsedSeconds > 0 && elapsedSeconds % 30 === 0) {
+                    updateFocus(-1);
+                    messageDisplay.textContent = "Tempo passando... O Foco está diminuindo lentamente.";
                 }
-            }
-            placePlayer();
+
+            }, 1000); // Atualiza a cada segundo
         }
 
-        function placePlayer() {
-            const oldPlayerTile = document.querySelector('.player');
-            if (oldPlayerTile) {
-                oldPlayerTile.classList.remove('player');
-                oldPlayerTile.textContent = ''; 
-                
-                const tileType = CURRENT_MAP[oldPlayerTile.dataset.y][oldPlayerTile.dataset.x];
-                
-                if (tileType === 'S') { oldPlayerTile.textContent = EMOJI_SOFA; }
-                else if (tileType === 'B') { oldPlayerTile.textContent = EMOJI_BED; }
-                else if (tileType === 'T') { oldPlayerTile.textContent = EMOJI_TABLE; }
-                else if (tileType === 'D') { oldPlayerTile.textContent = EMOJI_DOOR; }
-                else if (tileType === 'L') { oldPlayerTile.textContent = EMOJI_LOCKED_DOOR; }
-                else if (tileType === 'A') { oldPlayerTile.textContent = EMOJI_AURA; }
-                else if (tileType === 'G') { oldPlayerTile.textContent = EMOJI_CALM; } 
-                else if (tileType === 'R') { oldPlayerTile.textContent = EMOJI_RETREAT; } 
-                else if (tileType === 'M') { oldPlayerTile.textContent = ''; }
-                else if (tileType === 'K') { oldPlayerTile.textContent = EMOJI_KEY; } // Mostrar K se não foi coletada
+        function stopTimer() {
+            if (gameTimerInterval) {
+                clearInterval(gameTimerInterval);
+                gameTimerInterval = null;
             }
-            
-            const newPlayerTile = document.querySelector(`[data-x="${playerPos.x}"][data-y="${playerPos.y}"]`);
-            if (newPlayerTile) {
-                newPlayerTile.classList.add('player');
-                newPlayerTile.textContent = EMOJI_PLAYER; 
-            }
-        }
-
-        function movePlayer(dx, dy) {
-            if (focusValue <= 10) return; 
-
-            const newX = playerPos.x + dx;
-            const newY = playerPos.y + dy;
-            
-            if (newX < 0 || newX >= mapWidth || newY < 0 || newY >= mapHeight) { return; }
-
-            const nextTile = CURRENT_MAP[newY][newX];
-
-            // 1. Bloqueios Fixos (Parede, Mesa, Porta)
-            if (nextTile === '#' || nextTile === 'T' || nextTile === 'D') {
-                updateFocus(-10); 
-                return; 
-            }
-            
-            // 1b. Interação com Sofá (S) - Descanso (+5 Foco)
-            if (nextTile === 'S') {
-                updateFocus(5); 
-                return; 
-            }
-
-            // 1c. Interação com Cama (B) - Descanso (+15 Foco)
-            if (nextTile === 'B') {
-                updateFocus(15); 
-                return;
-            }
-            
-            // 1d. Bloqueio de Porta Trancada (L)
-            if (nextTile === 'L') {
-                if (hasKey) {
-                    hasKey = false; 
-                    
-                    CURRENT_MAP[newY][newX] = '_';
-                    
-                    const unlockedTile = document.querySelector(`[data-x="${newX}"][data-y="${newY}"]`);
-                    if (unlockedTile) {
-                        unlockedTile.classList.remove('locked-door');
-                        unlockedTile.classList.add('path');
-                        unlockedTile.textContent = ''; 
-                    }
-                    
-                    updateKeyStatus();
-                    
-                    playerPos.x = newX;
-                    playerPos.y = newY;
-                    placePlayer(); 
-                    updateFocus(-1); 
-                    updateAuraSignal();
-                    return; 
-                } else {
-                    updateFocus(-10); 
-                    messageDisplay.textContent = "Porta trancada! Precisa da Chave (🔑).";
-                    return;
-                }
-            }
-
-            // 2. Colisão com Recuo Emocional (R) (-20 Foco e Recuo de 3 tiles)
-            if (nextTile === 'R') {
-                updateFocus(-20); 
-                const backX = playerPos.x - (dx * 3);
-                const backY = playerPos.y - (dy * 3);
-                
-                playerPos.x = Math.min(mapWidth - 1, Math.max(0, backX));
-                playerPos.y = Math.min(mapHeight - 1, Math.max(0, backY));
-                
-                placePlayer(); 
-                updateAuraSignal();
-                messageDisplay.textContent = "Recuo! Perdeu 20 de Foco e foi empurrado(a) para trás.";
-                return; 
-            }
-
-            // 3. Ponto de Calma (G) (+5 Foco)
-            if (nextTile === 'G') { 
-                updateFocus(5); 
-            }
-            
-            // 3b. Coletar Chave (K)
-            if (nextTile === 'K') {
-                hasKey = true;
-                CURRENT_MAP[newY][newX] = '_'; 
-                updateKeyStatus();
-                messageDisplay.textContent = "Chave (🔑) obtida!";
-            }
-            
-            // 4. Atualizar Posição (Movimento normal)
-            playerPos.x = newX;
-            playerPos.y = newY;
-            placePlayer();
-            updateFocus(-1); 
-            updateAuraSignal();
-
-            // 5. Verificação de Condição de Vitória (A = Aura)
-            if (nextTile === 'A') { gameOver(true); } 
-        }
-        
-        function gameOver(victory, focusDefeat = false) {
-            const RESTART_DELAY = 5000;
-            
-            if (!focusDefeat) {
-                if (victory) {
-                    if (focusValue > 10) { 
-                        messageDisplay.textContent = `VITÓRIA! Você achou Aura com ${focusValue}% de Foco. Reiniciando em 5 segundos...`;
-                    } else {
-                        messageDisplay.textContent = `Encontro falhou. Foco muito baixo (${focusValue}%). Reiniciando em 5 segundos...`;
-                    }
-                } 
-            }
-            
-            document.removeEventListener('keydown', handleKeydown);
-            
-            setTimeout(function() {
-                resetGame(currentDifficulty); 
-                document.addEventListener('keydown', handleKeydown);
-            }, RESTART_DELAY); 
         }
         
         function setDifficulty(level) {
             currentDifficulty = level;
-            difficultyButtons.forEach(btn => {
-                btn.classList.remove('btn-selected');
-                if (btn.dataset.level === level) {
-                    btn.classList.add('btn-selected');
-                }
-            });
+
+            // Remove a seleção de todos os botões
+            difficultyButtons.forEach(btn => btn.classList.remove('btn-selected'));
+            
+            // Adiciona a seleção ao botão clicado
+            const selectedButton = document.querySelector(`[data-level="${level}"]`);
+            if (selectedButton) {
+                selectedButton.classList.add('btn-selected');
+            }
+
+            messageDisplay.textContent = `Nível ${level} selecionado. Pressione qualquer tecla ou mova o Gamepad para começar.`;
             resetGame(level);
         }
 
         function resetGame(level = currentDifficulty) {
+            // Para o jogo
+            gameActive = false;
+            stopTimer();
+
+            // Reinicia variáveis
+            CURRENT_MAP = copyMap(ALL_MAPS[level]);
+            mapHeight = CURRENT_MAP.length;
+            mapWidth = CURRENT_MAP[0].length;
             focusValue = 100;
             hasKey = false;
-            
-            const selectedMap = ALL_MAPS[level];
-            CURRENT_MAP = copyMap(selectedMap); 
-            
-            messageDisplay.textContent = `Iniciando jogo: ${level}`; 
+            scoreValue = 0;
 
+            // Localiza posições iniciais
             let startFound = false;
-            for (let y = 0; y < CURRENT_MAP.length; y++) {
-                for (let x = 0; x < CURRENT_MAP[0].length; x++) {
+            for (let y = 0; y < mapHeight; y++) {
+                for (let x = 0; x < mapWidth; x++) {
                     if (CURRENT_MAP[y][x] === 'M') {
                         playerPos = { x: x, y: y };
+                        CURRENT_MAP[y][x] = 'P'; 
                         startFound = true;
-                        break;
+                    } else if (CURRENT_MAP[y][x] === 'A') {
+                        auraPos = { x: x, y: y };
                     }
                 }
-                if (startFound) break;
             }
 
-            drawMaze(CURRENT_MAP); 
-            updateFocus(0); 
-            updateKeyStatus(); 
-            updateAuraSignal(); 
+            if (!startFound) {
+                console.error("Ponto de início 'M' não encontrado no mapa.");
+                playerPos = { x: 1, y: 1 };
+            }
+            
+            // Atualiza o display
+            updateMazeDisplay();
+            updateFocus(0);
+            updateKeyStatus();
+            updateAuraSignal();
+            scoreDisplay.textContent = '0';
+            timerDisplay.textContent = '00:00';
         }
 
-        /* --- LÓGICA DE CONTROLE (TECLADO & GAMEPAD) --- */
-        
-        function handleKeydown(e) {
-            let dx = 0;
-            let dy = 0;
-            let validKey = false;
+        function updateMazeDisplay() {
+            // Redefine o grid do container com base no mapa atual
+            mazeContainer.style.gridTemplateColumns = `repeat(${mapWidth}, 30px)`;
+            mazeContainer.style.gridTemplateRows = `repeat(${mapHeight}, 30px)`;
+            
+            mazeContainer.innerHTML = ''; 
 
-            switch (e.key) {
-                case 'ArrowUp': 
-                case 'w': dy = -1; validKey = true; break;
-                case 'ArrowDown': 
-                case 's': dy = 1; validKey = true; break;
-                case 'ArrowLeft': 
-                case 'a': dx = -1; validKey = true; break;
-                case 'ArrowRight': 
-                case 'd': dx = 1; validKey = true; break;
+            for (let y = 0; y < mapHeight; y++) {
+                for (let x = 0; x < mapWidth; x++) {
+                    const tile = document.createElement('div');
+                    tile.className = 'tile';
+                    let content = '';
+
+                    switch (CURRENT_MAP[y][x]) {
+                        case '#': // Parede
+                            tile.classList.add(wallColors[currentColorIndex]);
+                            break;
+                        case 'P': // Jogador
+                            tile.classList.add('player');
+                            content = EMOJI_PLAYER;
+                            break;
+                        case 'A': // Aura (Fim)
+                            tile.classList.add('end');
+                            content = EMOJI_AURA;
+                            break;
+                        case 'D': // Porta
+                            tile.classList.add('door');
+                            content = EMOJI_DOOR;
+                            break;
+                        case 'L': // Porta Trancada
+                            tile.classList.add('locked-door');
+                            content = EMOJI_LOCKED_DOOR;
+                            break;
+                        case 'K': // Chave
+                            tile.classList.add('key');
+                            content = EMOJI_KEY;
+                            break;
+                        case 'S': // Sofá (Interação - Focus)
+                            tile.classList.add('sofa');
+                            content = EMOJI_SOFA;
+                            break;
+                        case 'B': // Cama (Interação - Focus)
+                            tile.classList.add('bed');
+                            content = EMOJI_BED;
+                            break;
+                        case 'T': // Mesa (Interação - Focus)
+                            tile.classList.add('table');
+                            content = EMOJI_TABLE;
+                            break;
+                        case 'G': // Calm Zone (Ganho de Foco)
+                            tile.classList.add('calm');
+                            content = EMOJI_CALM;
+                            break;
+                        case 'R': // Retreat Zone (Perda de Foco)
+                            tile.classList.add('retreat');
+                            content = EMOJI_RETREAT;
+                            break;
+                        case 'N': // Room Name (Nome do Cômodo)
+                            // Não adiciona classe de fundo, apenas o texto
+                            tile.classList.add('room-name');
+                            const roomName = ROOM_NAMES_SALA[`${x},${y}`] || '';
+                            content = roomName;
+                            break;
+                        case '_': // Caminho
+                            // Permanece sem classes de fundo, apenas o background padrão do container
+                            break;
+                    }
+
+                    tile.textContent = content;
+                    mazeContainer.appendChild(tile);
+                }
+            }
+        }
+
+        function movePlayer(dx, dy) {
+            if (!gameActive) {
+                // Inicia o jogo no primeiro movimento
+                gameActive = true;
+                startTimer();
+                messageDisplay.textContent = 'O jogo começou!';
             }
 
-            if (validKey) {
-                e.preventDefault(); 
-                
-                const now = performance.now();
-                if (now < lastMoveTime + MOVE_COOLDOWN) {
-                    return; 
-                }
+            const newX = playerPos.x + dx;
+            const newY = playerPos.y + dy;
 
+            // Checa limites do mapa
+            if (newX < 0 || newX >= mapWidth || newY < 0 || newY >= mapHeight) {
+                return;
+            }
+
+            const targetTile = CURRENT_MAP[newY][newX];
+            let moveSuccess = false;
+
+            switch (targetTile) {
+                case '#': // Parede
+                    messageDisplay.textContent = "É uma parede! Não é possível passar.";
+                    updateFocus(-1);
+                    break;
+
+                case 'L': // Porta Trancada
+                    if (hasKey) {
+                        messageDisplay.textContent = "Destrancou a porta! A chave sumiu.";
+                        hasKey = false; 
+                        updateKeyStatus();
+                        // O movePlayer(dx, dy) será chamado recursivamente com o tile agora como 'D' (porta destrancada)
+                        CURRENT_MAP[newY][newX] = 'D'; 
+                        movePlayer(dx, dy); 
+                    } else {
+                        messageDisplay.textContent = "Porta Trancada! Procure por uma 🔑.";
+                        updateFocus(-1);
+                    }
+                    break;
+                
+                case 'D': // Porta
+                    messageDisplay.textContent = "Passou pela Porta. O Foco diminuiu um pouco.";
+                    updateFocus(-2);
+                    moveSuccess = true;
+                    break;
+
+                case 'K': // Chave
+                    messageDisplay.textContent = "Você encontrou a Chave (🔑)!";
+                    hasKey = true;
+                    updateKeyStatus();
+                    moveSuccess = true; 
+                    break;
+
+                case 'S': // Sofá (Interação)
+                case 'B': // Cama (Interação)
+                case 'T': // Mesa (Interação)
+                    messageDisplay.textContent = "Interagindo com o objeto! Foco Restaurado.";
+                    updateFocus(10);
+                    moveSuccess = true;
+                    break;
+                
+                case 'G': // Calm Zone
+                    messageDisplay.textContent = "Zona de Calma (🧘)! Foco restaurado rapidamente.";
+                    updateFocus(5); 
+                    moveSuccess = true;
+                    break;
+
+                case 'R': // Retreat Zone
+                    messageDisplay.textContent = "Zona de Retirada (😠)! Perdeu Foco!";
+                    updateFocus(-5); 
+                    moveSuccess = true;
+                    break;
+
+                case 'A': // Fim
+                    moveSuccess = true;
+                    gameOver(true); // Chamada para Vitória
+                    break;
+
+                case '_': // Caminho Livre
+                case 'N': // Nome do Cômodo
+                    moveSuccess = true;
+                    break;
+
+                default:
+                    moveSuccess = true;
+                    break;
+            }
+
+            if (moveSuccess) {
+                // Limpa a posição antiga e atualiza a nova posição
+                CURRENT_MAP[playerPos.y][playerPos.x] = '_';
+                playerPos.x = newX;
+                playerPos.y = newY;
+                CURRENT_MAP[playerPos.y][playerPos.x] = 'P';
+
+                // Troca a cor da parede (efeito de distração)
+                currentColorIndex = (currentColorIndex + 1) % wallColors.length;
+
+                updateMazeDisplay();
+                updateAuraSignal();
+                
+                // Penalidade mínima de foco por movimento (Distração)
+                updateFocus(-0.5); 
+            }
+        }
+
+        function gameOver(isWin, isFocusLoss = false) {
+            stopTimer();
+            gameActive = false;
+
+            // 1. Cálculo da Pontuação Final (apenas se for vitória)
+            if (isWin) {
+                const elapsedSeconds = Math.floor((Date.now() - gameStartTime) / 1000);
+                const multiplier = DIFFICULTY_MULTIPLIERS[currentDifficulty];
+
+                // Foco vale mais, Tempo é penalidade
+                const baseScore = focusValue * multiplier;
+                const timePenalty = elapsedSeconds * 5; 
+                
+                scoreValue = Math.floor(baseScore - timePenalty);
+                scoreValue = Math.max(0, scoreValue); // Pontuação mínima é 0
+                scoreDisplay.textContent = scoreValue;
+
+                messageDisplay.textContent = `🎉 VITÓRIA! Pontuação Final: ${scoreValue} (Foco: ${focusValue}%, Tempo: ${timerDisplay.textContent})`;
+                alert(`Parabéns! Você encontrou a Aura! \n\nPontuação Final: ${scoreValue}\n\nDetalhes: \n- Foco x Multiplicador (${focusValue} x ${multiplier}) \n- Penalidade de Tempo (${elapsedSeconds}s x 5)`);
+            } else if (isFocusLoss) {
+                 messageDisplay.textContent = `❌ GAME OVER! Seu foco se esgotou. Tente novamente!`;
+                 alert(`Foco esgotado! Game Over. Seu foco não pode cair para 0.`);
+            } else {
+                 messageDisplay.textContent = `❌ GAME OVER! O jogo foi interrompido.`;
+            }
+        }
+
+        /* --- Funções de Controle (Teclado) --- */
+
+        function handleKeydown(event) {
+            // Evita repetição do evento keydown (autofire)
+            if (lastKeyPressed === event.code) return; 
+            lastKeyPressed = event.code;
+
+            const now = Date.now();
+            if (now - lastMoveTime < MOVE_COOLDOWN) return;
+
+            let dx = 0;
+            let dy = 0;
+            let moved = false;
+
+            // Teclas de Movimento (Setas e WASD)
+            switch (event.code) {
+                case 'ArrowUp':
+                case 'KeyW':
+                    dy = -1;
+                    moved = true;
+                    break;
+                case 'ArrowDown':
+                case 'KeyS':
+                    dy = 1;
+                    moved = true;
+                    break;
+                case 'ArrowLeft':
+                case 'KeyA':
+                    dx = -1;
+                    moved = true;
+                    break;
+                case 'ArrowRight':
+                case 'KeyD':
+                    dx = 1;
+                    moved = true;
+                    break;
+            }
+
+            if (moved) {
+                event.preventDefault(); // Evita scroll da página
                 movePlayer(dx, dy);
                 lastMoveTime = now;
             }
         }
         
-        function updateGamepadStatus(connected, name = '') {
+        function handleKeyup(event) {
+             // Limpa o estado da tecla pressionada
+             if (lastKeyPressed === event.code) {
+                 lastKeyPressed = null;
+             }
+        }
+        
+
+        /* --- Funções de Controle (Gamepad) --- */
+
+        function updateGamepadStatus(connected, id) {
             if (connected) {
-                gamepadStatusDisplay.textContent = `✅ Conectado: ${name.substring(0, 30)}...`; 
-                gamepadStatusDisplay.style.color = '#2e8b57';
+                gamepadStatusDisplay.textContent = `✅ Conectado: ${id}`;
+                gamepadStatusDisplay.style.color = 'green';
             } else {
                 gamepadStatusDisplay.textContent = `🛑 Desconectado`;
-                gamepadStatusDisplay.style.color = '#d0021b';
+                gamepadStatusDisplay.style.color = 'red';
             }
         }
 
-        window.addEventListener("gamepadconnected", (e) => {
-            gamepadIndex = e.gamepad.index;
-            updateGamepadStatus(true, e.gamepad.id);
-        });
-
-        window.addEventListener("gamepaddisconnected", (e) => {
-            if (gamepadIndex === e.gamepad.index) {
-                gamepadIndex = null;
-                updateGamepadStatus(false);
-            }
-        });
-
         function handleGamepadInput() {
             const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
-            const gamepad = gamepads[gamepadIndex];
+            let gamepad = null;
 
-            if (gamepad && focusValue > 10) { 
-                const now = performance.now();
+            if (gamepadIndex !== null) {
+                gamepad = gamepads[gamepadIndex];
+            }
+
+            // Se um Gamepad está conectado, processa a entrada
+            if (gamepad) {
+                const now = Date.now();
                 
-                if (now < lastMoveTime + MOVE_COOLDOWN) {
+                // Cooldown para evitar movimentos excessivamente rápidos/duplos
+                if (now - lastMoveTime < MOVE_COOLDOWN) {
                     requestAnimationFrame(handleGamepadInput);
                     return; 
                 }
@@ -663,20 +841,30 @@
                 
                 const buttons = gamepad.buttons;
 
+                // Threshold para sticks analógicos (evita "drift")
                 const AXIS_THRESHOLD = 0.4; 
-                const axisX = gamepad.axes[0] || 0; 
-                const axisY = gamepad.axes[1] || 0;
+                const axisX = gamepad.axes[0] || 0; // Eixo 0: Analógico Esquerdo X
+                const axisY = gamepad.axes[1] || 0; // Eixo 1: Analógico Esquerdo Y
                 
+                // Mapeamento de Movimento: D-Pad (12-15) OU Analógico Esquerdo (Axis 0, 1)
+
+                // Cima (D-Pad 12 ou Analógico Y < -THRESHOLD)
                 if (buttons[12]?.pressed || axisY < -AXIS_THRESHOLD) { dy = -1; moved = true; } 
+                // Baixo (D-Pad 13 ou Analógico Y > +THRESHOLD)
                 else if (buttons[13]?.pressed || axisY > AXIS_THRESHOLD) { dy = 1; moved = true; } 
+                // Esquerda (D-Pad 14 ou Analógico X < -THRESHOLD)
                 else if (buttons[14]?.pressed || axisX < -AXIS_THRESHOLD) { dx = -1; moved = true; } 
+                // Direita (D-Pad 15 ou Analógico X > AXIS_THRESHOLD)
                 else if (buttons[15]?.pressed || axisX > AXIS_THRESHOLD) { dx = 1; moved = true; } 
 
                 if (moved) {
                     movePlayer(dx, dy);
                     lastMoveTime = now;
                 }
-            } else if (!gamepad) {
+            } 
+            // Se o Gamepad atual estiver desconectado, busca um novo
+            else if (!gamepad) {
+                // Tenta encontrar o primeiro gamepad disponível
                 for (let i = 0; i < gamepads.length; i++) {
                     if (gamepads[i]) {
                         gamepadIndex = i;
@@ -684,14 +872,17 @@
                         break;
                     }
                 }
+                
+                // Se ainda não houver gamepad, atualiza o status para desconectado
+                if (gamepadIndex === null) {
+                    updateGamepadStatus(false, '');
+                }
             }
 
+            // Loop de animação
             requestAnimationFrame(handleGamepadInput);
         }
+        
     </script>
 </body>
 </html>
-
-        
-
-     
