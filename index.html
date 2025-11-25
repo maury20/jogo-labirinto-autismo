@@ -118,7 +118,7 @@
     
     <div id="difficulty-selector">
         <button id="btn-easy" class="btn-easy btn-selecte" data-level="FACIL">Fácil (18x18)</button>
-        <button id="btn-med" class="btn-med" data-level="MÉDIO">Médio (20x20)</button>
+        <button id="btn-med" class="btn-med" data-level="MEDIO">Médio (20x20)</button>
         <button id="btn-hard" class="btn-hard" data-level="DIFICIL">Difícil (20x20)</button>
         <button id="btn-master" class="btn-master" data-level="MESTRE">Mestre (20x20)</button>
     </div>
@@ -254,13 +254,13 @@
         // Agrupa todos os mapas para seleção
         const ALL_MAPS = {
             'FACIL': EASY_MAP_ORIGINAL,
-            'DIFICIL': HARD_MAP_ANXIETY,
-            'MESTRE': MASTER_MAP_CRITICISM,
-            'IMPOSSIVEL': IMPOSSIBLE_MAP_BURNOUT
+            'MEDIO': HARD_MAP_ANXIETY,
+            'DIFICIL': MASTER_MAP_CRITICISM,
+            'MESTRE': IMPOSSIBLE_MAP_BURNOUT
         };
 
         // Estado inicial de dificuldade é o Impossível
-        let currentDifficulty = 'IMPOSSIVEL';
+        let currentDifficulty = 'FACIL';
         let CURRENT_MAP;
         
         // As dimensões serão definidas em resetGame()
