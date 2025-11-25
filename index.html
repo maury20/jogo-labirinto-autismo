@@ -398,7 +398,7 @@
 
             // 1. Bloqueios Fixos (Parede, Mesa, Porta)
             if (nextTile === '#' || nextTile === 'T' || nextTile === 'D') {
-                updateFocus(-10); 
+                updateFocus(-5); 
                 return; 
             }
             
@@ -408,9 +408,9 @@
                 return; 
             }
 
-            // 1c. Interação com Cama (B) - Descanso (+15 Foco)
+            // 1c. Interação com Cama (B) - Descanso (+10 Foco)
             if (nextTile === 'B') {
-                updateFocus(15); 
+                updateFocus(10); 
                 return;
             }
             
@@ -443,9 +443,9 @@
                 }
             }
 
-            // 2. Colisão com Recuo Emocional (R) (-20 Foco e Recuo de 3 tiles)
+            // 2. Colisão com Recuo Emocional (R) (-10 Foco e Recuo de 3 tiles)
             if (nextTile === 'R') {
-                updateFocus(-20); 
+                updateFocus(-10); 
                 const backX = playerPos.x - (dx * 3);
                 const backY = playerPos.y - (dy * 3);
                 
@@ -454,7 +454,7 @@
                 
                 placePlayer(); 
                 updateAuraSignal();
-                messageDisplay.textContent = "Recuo! Perdeu 20 de Foco e foi empurrado(a) para trás.";
+                messageDisplay.textContent = "Recuo! Perdeu 10 de Foco e foi empurrado(a) para trás.";
                 return; 
             }
 
@@ -485,9 +485,9 @@
         function gameOver(victory, focusDefeat = false) {
             const RESTART_DELAY = 5000;
             
-            if (!focusDefeat) {
+            if (!focusDefeat) 
                 if (victory) {
-                    if (focusValue > 10) { 
+                    if (focusValue > 1) { 
                         messageDisplay.textContent = `Você achou Aura com ${focusValue}% de Foco. Reiniciando em 5 segundos...`;
                     } else {
                         messageDisplay.textContent = `falhou. Foco muito baixo (${focusValue}%). Reiniciando em 5 segundos...`;
