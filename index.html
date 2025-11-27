@@ -6,10 +6,23 @@
     <title>AURA</title>
 
     <style>
-        /* ------------------- CSS ------------------- */
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; flex-direction: column; align-items: center; background-color: #f0f8ff; color: #333; padding: 10px; }
-        h1 { color: #d0021b; margin-bottom: 5px; font-size: 1.6em; }
-        
+        /* ------------------- CSS (Colado aqui do style.css) ------------------- */
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            background-color: #f0f8ff; 
+            color: #333; 
+            padding: 10px; 
+        }
+
+        h1 { 
+            color: #d0021b; 
+            margin-bottom: 5px; 
+            font-size: 1.6em; 
+        }
+
         /* Estilo para o seletor de dificuldade */
         #difficulty-selector {
             margin-bottom: 20px;
@@ -40,19 +53,41 @@
         }
 
         .btn-easy { background-color: #7ed321; color: white; }
-        .btn-hard { background-color: #f5a623; color: white; } /* Usado para Médio */
-        .btn-master { background-color: #4a90e2; color: white; } /* Usado para Difícil */
-        .btn-impossible { background-color: #d0021b; color: white; } /* Usado para Mestre */
+        .btn-hard { background-color: #f5a623; color: white; } 
+        .btn-master { background-color: #4a90e2; color: white; } 
+        .btn-impossible { background-color: #d0021b; color: white; } 
         .btn-selected { 
             border: 3px solid black !important;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
             transform: scale(1.05);
         }
-        
-        #game-info { display: flex; gap: 40px; margin-bottom: 15px; font-size: 1.1em; padding: 10px 20px; border: 2px solid #ccc; border-radius: 8px; background-color: #fff; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
-        #focus-meter { color: #d0021b; font-weight: bold; }
-        #aura-signal { font-weight: bold; }
-        #key-status { font-weight: bold; color: #b8860b; } 
+
+        #game-info { 
+            display: flex; 
+            gap: 40px; 
+            margin-bottom: 15px; 
+            font-size: 1.1em; 
+            padding: 10px 20px; 
+            border: 2px solid #ccc; 
+            border-radius: 8px; 
+            background-color: #fff; 
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); 
+        }
+
+        #focus-meter { 
+            color: #d0021b; 
+            font-weight: bold; 
+        }
+
+        #aura-signal { 
+            font-weight: bold; 
+        }
+
+        #key-status { 
+            font-weight: bold; 
+            color: #b8860b; 
+        } 
+
         #message-display { 
             height: 30px; 
             color: #d0021b; 
@@ -61,7 +96,7 @@
             font-size: 1.2em;
             text-align: center;
         }
-        
+
         /* Configurações visuais do labirinto (tamanho base 20x20) */
         #maze-container { 
             display: grid; 
@@ -72,25 +107,32 @@
             background-color: #e6e6e6; 
             max-width: 90vw; 
         }
-        
+
         @media (max-width: 650px) {
             .tile { width: 25px; height: 25px; font-size: 1em; }
             #maze-container { grid-template-columns: repeat(20, 25px); grid-template-rows: repeat(20, 25px); }
         }
 
 
-        .tile { width: 30px; height: 30px; box-sizing: border-box; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 1.2em; transition: background-color 0.1s; }
+        .tile { 
+            width: 30px; 
+            height: 30px; 
+            box-sizing: border-box; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            font-weight: bold; 
+            font-size: 1.2em; 
+            transition: background-color 0.1s; 
+        }
 
-        /* Estilos dos elementos do mapa */
-        
-        /* CSS: Paredes Laterais Coloridas */
-        .wall-side-blue { background-color: #4a90e2; border: 1px solid #357ae8; }
-        .wall-side-yellow { background-color: #f8e71c; border: 1px solid #e1d30f; }
-        .wall-side-red { background-color: #d0021b; border: 1px solid #a80017; }
-        .wall-side-green { background-color: #7ed321; border: 1px solid #5fb50d; }
-        
-        /* CSS: Paredes Centrais Cinzas (e as outras laterais não coloridas) */
-        .wall-center-gray { background-color: #6c757d; border: 1px solid #495057; }
+        /* Estilos das Paredes */
+        .wall-border-blue { background-color: #4a90e2; border: 1px solid #357ae8; }
+        .wall-border-yellow { background-color: #f8e71c; border: 1px solid #e1d30f; }
+        .wall-border-red { background-color: #d0021b; border: 1px solid #a80017; }
+        .wall-border-green { background-color: #7ed321; border: 1px solid #5fb50d; }
+
+        .wall-inner-gray { background-color: #6c757d; border: 1px solid #495057; }
             
         .door { background-color: #b8860b; border: 1px solid #8b6508; } 
         .locked-door { background-color: #900d0d; border: 2px solid #5a0707; color: white; } 
@@ -127,6 +169,7 @@
             line-height: 30px; 
         }
         @keyframes pulse { from { box-shadow: 0 0 5px #f8e71c; } to { box-shadow: 0 0 15px orange, 0 0 20px #d0021b; } }
+        /* ------------------- FIM DO CSS ------------------- */
     </style>
 </head>
 <body>
@@ -156,9 +199,9 @@
 
     <script>
         /* ------------------------------------- */
-        /* CÓDIGO JAVASCRIPT (Lógica do Jogo) */
+        /* CÓDIGO JAVASCRIPT (Colado aqui do script.js) */
         /* ------------------------------------- */
-
+        
         // --- EMOJIS E ITENS ---
         const EMOJI_SOFA = '🛋️';
         const EMOJI_BED = '🛌';
@@ -173,7 +216,6 @@
 
         // --- 1. Definição dos Mapas de Dificuldade ---
         
-         
         // Mapa 1: Fácil (18x18)
         const MAP_EASY_CALM = [
             ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'], 
@@ -248,7 +290,6 @@
 
         // Mapa 4: Mestre (20x20)
         const MAP_MASTER_BURNOUT = [
-        
             ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
             ['#', 'M', 'K', '#', 'K', 'L', '_', '_', 'R', '#', 'L', '_', '_', '_', 'R', '#', 'G', '_', 'L', '#'],
             ['#', '_', '_', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
@@ -272,8 +313,6 @@
         ];
 
 
-
-
         // Agrupa todos os mapas para seleção
         const ALL_MAPS = {
             'FACIL': MAP_EASY_CALM,
@@ -285,20 +324,19 @@
         // Estado inicial de dificuldade é o Mestre
         let currentDifficulty = 'MESTRE';
         let CURRENT_MAP;
-        
+
         let mapHeight = 0; 
         let mapWidth = 0; 
-        
+
         const ROOM_NAMES_SALA = {
-             // Adaptação dos nomes dos cômodos para os mapas
             '2,1': 'SALA', '14,5': 'COZINHA', '1,8': 'QUARTO 1', '1,11': 'BANHEIRO', '3,14': 'QUARTO 2', '17,17': 'QUARTO AURA' 
         };
-        
+
         let playerPos = { x: 0, y: 0 }; 
         let focusValue = 100;
         let auraPos = { x: 0, y: 0 }; 
         let hasKey = false; 
-        
+
         // Elementos DOM 
         let mazeContainer;
         let focusMeterDisplay;
@@ -307,19 +345,19 @@
         let messageDisplay; 
         let gamepadStatusDisplay;
         let difficultyButtons;
-        
-        // Cores para paredes laterais e índice
-        const SIDE_WALL_CLASSES = ['wall-side-blue', 'wall-side-yellow', 'wall-side-red', 'wall-side-green'];
-        let currentSideColorIndex = 0; 
-        
+
+        // Cores para paredes de borda
+        const BORDER_WALL_CLASSES = ['wall-border-blue', 'wall-border-yellow', 'wall-border-red', 'wall-border-green'];
+        let currentBorderColorIndex = 0; 
+
         let gamepadIndex = null;
         let lastMoveTime = 0;
-        const MOVE_COOLDOWN = 120;
+        const MOVE_COOLDOWN = 120; // Cooldown para movimentos (em ms)
 
         function copyMap(map) {
             return map.map(row => [...row]);
         }
-        
+
         // Garante que o script só rode após o DOM estar carregado
         window.addEventListener('DOMContentLoaded', (event) => {
             // 1. Atribuições DOM
@@ -348,26 +386,25 @@
         });
 
         /* --- Funções de Jogo e Estado --- */
-        
+
         function updateFocus(change) {
             focusValue = Math.min(100, Math.max(0, focusValue + change));
             focusMeterDisplay.textContent = focusValue;
             
-            // LÓGICA DE REINÍCIO (Focus <= 10)
             if (focusValue <= 10) { 
                 focusValue = Math.max(0, focusValue); 
                 focusMeterDisplay.textContent = focusValue; 
                 focusMeterDisplay.style.color = 'red'; 
                 messageDisplay.textContent = `Foco esgotado! (${focusValue}%) Reiniciando...`; 
-                gameOver(false, true); // Derrota por Foco
+                gameOver(false, true); 
                 return;
             } else if (focusValue <= 20) { 
-                 focusMeterDisplay.style.color = 'red'; 
+                focusMeterDisplay.style.color = 'red'; 
             } else { 
                 focusMeterDisplay.style.color = '#d0021b'; 
             }
         }
-        
+
         function updateKeyStatus() { 
             keyStatusDisplay.textContent = hasKey ? '🟢 com a chave' : '🔴 sem a chave';
             keyStatusDisplay.style.color = hasKey ? '#2e8b57' : '#b8860b';
@@ -381,17 +418,17 @@
             else { signalText = '🔴 Distante (Sinal fraco)'; auraSignalDisplay.style.color = '#f5a623'; }
             auraSignalDisplay.textContent = signalText;
         }
-        
-        // FUNÇÃO drawMaze MODIFICADA
+
+        // FUNÇÃO drawMaze MODIFICADA: Implementa a lógica de borda/interior
         function drawMaze(map) {
             mazeContainer.innerHTML = '';
-            // Atualiza o CSS grid template columns/rows para o tamanho do mapa
+            
             mapHeight = map.length;
             mapWidth = map[0].length;
             mazeContainer.style.gridTemplateColumns = `repeat(${mapWidth}, 30px)`;
             mazeContainer.style.gridTemplateRows = `repeat(${mapHeight}, 30px)`;
             
-            currentSideColorIndex = 0; // Resetar o índice de cor lateral
+            currentBorderColorIndex = 0; 
 
             for (let y = 0; y < mapHeight; y++) {
                 for (let x = 0; x < mapWidth; x++) {
@@ -402,15 +439,13 @@
 
                     switch (map[y][x]) {
                         case '#': 
-                            // Lógica para determinar se a parede é lateral ESQUERDA (3 tiles de profundidade) ou central/outra lateral
-                            // Apenas as 3 primeiras colunas (x=0, x=1, x=2) serão coloridas
-                            const isLeftSideWall = (x < 3);
+                            const isBorderWall = (x === 0 || x === mapWidth - 1 || y === 0 || y === mapHeight - 1);
 
-                            if (isLeftSideWall) {
-                                tile.classList.add(SIDE_WALL_CLASSES[currentSideColorIndex]);
-                                currentSideColorIndex = (currentSideColorIndex + 1) % SIDE_WALL_CLASSES.length;
+                            if (isBorderWall) {
+                                tile.classList.add(BORDER_WALL_CLASSES[currentBorderColorIndex]);
+                                currentBorderColorIndex = (currentBorderColorIndex + 1) % BORDER_WALL_CLASSES.length;
                             } else {
-                                tile.classList.add('wall-center-gray'); // Todas as outras paredes (incluindo topo/baixo/direita) cinzas
+                                tile.classList.add('wall-inner-gray'); 
                             }
                             break;
                         case 'S': tile.classList.add('sofa'); tile.textContent = EMOJI_SOFA; break;
@@ -449,7 +484,7 @@
                 else if (tileType === 'G') { oldPlayerTile.textContent = EMOJI_CALM; } 
                 else if (tileType === 'R') { oldPlayerTile.textContent = EMOJI_RETREAT; } 
                 else if (tileType === 'M') { oldPlayerTile.textContent = ''; }
-                else if (tileType === 'K') { oldPlayerTile.textContent = EMOJI_KEY; } // Mostrar K se não foi coletada
+                else if (tileType === 'K') { oldPlayerTile.textContent = EMOJI_KEY; } 
             }
             
             const newPlayerTile = document.querySelector(`[data-x="${playerPos.x}"][data-y="${playerPos.y}"]`);
@@ -474,21 +509,21 @@
 
             const nextTile = CURRENT_MAP[newY][newX];
 
-            // 1. Bloqueios Fixos (Parede, Mesa, Porta)
+            // 1. Bloqueios Fixos 
             if (nextTile === '#' || nextTile === 'T' || nextTile === 'D') {
                 updateFocus(-10); 
                 lastMoveTime = now;
                 return; 
             }
             
-            // 1b. Interação com Sofá (S) - Descanso (+5 Foco)
+            // 1b. Interação com Sofá (S) - Descanso 
             if (nextTile === 'S') {
                 updateFocus(5); 
                 lastMoveTime = now;
                 return; 
             }
 
-            // 1c. Interação com Cama (B) - Descanso (+15 Foco)
+            // 1c. Interação com Cama (B) - Descanso 
             if (nextTile === 'B') {
                 updateFocus(15); 
                 lastMoveTime = now;
@@ -526,7 +561,7 @@
                 }
             }
 
-            // 2. Colisão com Recuo Emocional (R) (-20 Foco e Recuo de 3 tiles)
+            // 2. Colisão com Recuo Emocional (R) 
             if (nextTile === 'R') {
                 updateFocus(-20); 
                 const backX = playerPos.x - (dx * 3);
@@ -542,7 +577,7 @@
                 return; 
             }
 
-            // 3. Ponto de Calma (G) (+5 Foco)
+            // 3. Ponto de Calma (G) 
             if (nextTile === 'G') { 
                 updateFocus(5); 
             }
@@ -566,7 +601,7 @@
             // 5. Verificação de Condição de Vitória (A = Aura)
             if (nextTile === 'A') { gameOver(true); } 
         }
-        
+
         function gameOver(victory, focusDefeat = false) {
             const RESTART_DELAY = 5000;
             
@@ -587,7 +622,7 @@
                 document.addEventListener('keydown', handleKeydown);
             }, RESTART_DELAY); 
         }
-        
+
         function setDifficulty(level) {
             currentDifficulty = level;
             difficultyButtons.forEach(btn => {
@@ -627,7 +662,7 @@
         }
 
         /* --- LÓGICA DE CONTROLE (TECLADO & GAMEPAD) --- */
-        
+
         function handleKeydown(e) {
             let dx = 0;
             let dy = 0;
@@ -653,10 +688,9 @@
                 }
 
                 movePlayer(dx, dy);
-                // Note: lastMoveTime is updated inside movePlayer if movement occurs
             }
         }
-        
+
         function updateGamepadStatus(connected, name = '') {
             if (connected) {
                 gamepadStatusDisplay.textContent = `✅ Conectado: ${name.substring(0, 30)}...`; 
@@ -701,21 +735,15 @@
                 const axisX = gamepad.axes[0] || 0; 
                 const axisY = gamepad.axes[1] || 0;
                 
-                // D-Pad Cima (12) ou Eixo Y negativo (Joystick para cima)
                 if (buttons[12]?.pressed || axisY < -AXIS_THRESHOLD) { dy = -1; moved = true; } 
-                // D-Pad Baixo (13) ou Eixo Y positivo (Joystick para baixo)
                 else if (buttons[13]?.pressed || axisY > AXIS_THRESHOLD) { dy = 1; moved = true; } 
-                // D-Pad Esquerda (14) ou Eixo X negativo (Joystick para esquerda)
                 else if (buttons[14]?.pressed || axisX < -AXIS_THRESHOLD) { dx = -1; moved = true; } 
-                // D-Pad Direita (15) ou Eixo X positivo (Joystick para direita)
                 else if (buttons[15]?.pressed || axisX > AXIS_THRESHOLD) { dx = 1; moved = true; } 
 
                 if (moved) {
                     movePlayer(dx, dy);
-                    // Note: lastMoveTime is updated inside movePlayer if movement occurs
                 }
             } else if (!gamepad) {
-                // Tenta reconectar a um gamepad se o índice atual estiver desconectado
                 for (let i = 0; i < gamepads.length; i++) {
                     if (gamepads[i]) {
                         gamepadIndex = i;
@@ -727,6 +755,9 @@
 
             requestAnimationFrame(handleGamepadInput);
         }
+        /* ------------------------------------- */
+        /* FIM DO CÓDIGO JAVASCRIPT */
+        /* ------------------------------------- */
     </script>
 </body>
 </html>
