@@ -82,10 +82,15 @@
         .tile { width: 30px; height: 30px; box-sizing: border-box; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 1.2em; transition: background-color 0.1s; }
 
         /* Estilos dos elementos do mapa */
-        .wall-blue { background-color: #4a90e2; border: 1px solid #357ae8; }
-        .wall-yellow { background-color: #f8e71c; border: 1px solid #e1d30f; }
-        .wall-red { background-color: #d0021b; border: 1px solid #a80017; }
-        .wall-green { background-color: #7ed321; border: 1px solid #5fb50d; }
+        
+        /* NOVO CSS: Paredes Laterais Coloridas */
+        .wall-side-blue { background-color: #4a90e2; border: 1px solid #357ae8; }
+        .wall-side-yellow { background-color: #f8e71c; border: 1px solid #e1d30f; }
+        .wall-side-red { background-color: #d0021b; border: 1px solid #a80017; }
+        .wall-side-green { background-color: #7ed321; border: 1px solid #5fb50d; }
+        
+        /* NOVO CSS: Paredes Centrais Cinzas */
+        .wall-center-gray { background-color: #6c757d; border: 1px solid #495057; }
             
         .door { background-color: #b8860b; border: 1px solid #8b6508; } 
         .locked-door { background-color: #900d0d; border: 2px solid #5a0707; color: white; } 
@@ -303,8 +308,9 @@
         let gamepadStatusDisplay;
         let difficultyButtons;
         
-        const wallColors = ['wall-blue', 'wall-yellow', 'wall-red', 'wall-green'];
-        let currentColorIndex = 0; 
+        // NOVO JS: Cores para paredes laterais e índice
+        const SIDE_WALL_CLASSES = ['wall-side-blue', 'wall-side-yellow', 'wall-side-red', 'wall-side-green'];
+        let currentSideColorIndex = 0; 
         
         let gamepadIndex = null;
         let lastMoveTime = 0;
@@ -376,6 +382,7 @@
             auraSignalDisplay.textContent = signalText;
         }
         
+        // FUNÇÃO drawMaze MODIFICADA
         function drawMaze(map) {
             mazeContainer.innerHTML = '';
             // Atualiza o CSS grid template columns/rows para o tamanho do mapa
@@ -384,6 +391,8 @@
             mazeContainer.style.gridTemplateColumns = `repeat(${mapWidth}, 30px)`;
             mazeContainer.style.gridTemplateRows = `repeat(${mapHeight}, 30px)`;
             
+            currentSideColorIndex = 0; // Resetar o índice de cor lateral
+
             for (let y = 0; y < mapHeight; y++) {
                 for (let x = 0; x < mapWidth; x++) {
                     const tile = document.createElement('div');
@@ -392,7 +401,17 @@
                     tile.dataset.y = y;
 
                     switch (map[y][x]) {
-                        case '#': tile.classList.add(wallColors[currentColorIndex]); currentColorIndex = (currentColorIndex + 1) % wallColors.length; break;
+                        case '#': 
+                            // Lógica para determinar se a parede é lateral (3 tiles de profundidade) ou central
+                            const isSideWall = (x < 3 || x >= mapWidth - 3 || y < 3 || y >= mapHeight - 3);
+
+                            if (isSideWall) {
+                                tile.classList.add(SIDE_WALL_CLASSES[currentSideColorIndex]);
+                                currentSideColorIndex = (currentSideColorIndex + 1) % SIDE_WALL_CLASSES.length;
+                            } else {
+                                tile.classList.add('wall-center-gray'); // Parede central cinza
+                            }
+                            break;
                         case 'S': tile.classList.add('sofa'); tile.textContent = EMOJI_SOFA; break;
                         case 'B': tile.classList.add('bed'); tile.textContent = EMOJI_BED; break;
                         case 'T': tile.classList.add('table'); tile.textContent = EMOJI_TABLE; break;
@@ -669,9 +688,13 @@
                 const axisX = gamepad.axes[0] || 0; 
                 const axisY = gamepad.axes[1] || 0;
                 
+                // D-Pad Cima (12) ou Eixo Y negativo (Joystick para cima)
                 if (buttons[12]?.pressed || axisY < -AXIS_THRESHOLD) { dy = -1; moved = true; } 
+                // D-Pad Baixo (13) ou Eixo Y positivo (Joystick para baixo)
                 else if (buttons[13]?.pressed || axisY > AXIS_THRESHOLD) { dy = 1; moved = true; } 
+                // D-Pad Esquerda (14) ou Eixo X negativo (Joystick para esquerda)
                 else if (buttons[14]?.pressed || axisX < -AXIS_THRESHOLD) { dx = -1; moved = true; } 
+                // D-Pad Direita (15) ou Eixo X positivo (Joystick para direita)
                 else if (buttons[15]?.pressed || axisX > AXIS_THRESHOLD) { dx = 1; moved = true; } 
 
                 if (moved) {
@@ -679,6 +702,7 @@
                     lastMoveTime = now;
                 }
             } else if (!gamepad) {
+                // Tenta reconectar a um gamepad se o índice atual estiver desconectado
                 for (let i = 0; i < gamepads.length; i++) {
                     if (gamepads[i]) {
                         gamepadIndex = i;
@@ -693,6 +717,3 @@
     </script>
 </body>
 </html>
-        
-       
-
