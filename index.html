@@ -83,13 +83,13 @@
 
         /* Estilos dos elementos do mapa */
         
-        /* NOVO CSS: Paredes Laterais Coloridas */
+        /* CSS: Paredes Laterais Coloridas */
         .wall-side-blue { background-color: #4a90e2; border: 1px solid #357ae8; }
         .wall-side-yellow { background-color: #f8e71c; border: 1px solid #e1d30f; }
         .wall-side-red { background-color: #d0021b; border: 1px solid #a80017; }
         .wall-side-green { background-color: #7ed321; border: 1px solid #5fb50d; }
         
-        /* NOVO CSS: Paredes Centrais Cinzas */
+        /* CSS: Paredes Centrais Cinzas (e as outras laterais não coloridas) */
         .wall-center-gray { background-color: #6c757d; border: 1px solid #495057; }
             
         .door { background-color: #b8860b; border: 1px solid #8b6508; } 
@@ -308,7 +308,7 @@
         let gamepadStatusDisplay;
         let difficultyButtons;
         
-        // NOVO JS: Cores para paredes laterais e índice
+        // Cores para paredes laterais e índice
         const SIDE_WALL_CLASSES = ['wall-side-blue', 'wall-side-yellow', 'wall-side-red', 'wall-side-green'];
         let currentSideColorIndex = 0; 
         
@@ -402,14 +402,15 @@
 
                     switch (map[y][x]) {
                         case '#': 
-                            // Lógica para determinar se a parede é lateral (3 tiles de profundidade) ou central
-                            const isSideWall = (x < 3 || x >= mapWidth - 3 || y < 3 || y >= mapHeight - 3);
+                            // Lógica para determinar se a parede é lateral ESQUERDA (3 tiles de profundidade) ou central/outra lateral
+                            // Apenas as 3 primeiras colunas (x=0, x=1, x=2) serão coloridas
+                            const isLeftSideWall = (x < 3);
 
-                            if (isSideWall) {
+                            if (isLeftSideWall) {
                                 tile.classList.add(SIDE_WALL_CLASSES[currentSideColorIndex]);
                                 currentSideColorIndex = (currentSideColorIndex + 1) % SIDE_WALL_CLASSES.length;
                             } else {
-                                tile.classList.add('wall-center-gray'); // Parede central cinza
+                                tile.classList.add('wall-center-gray'); // Todas as outras paredes (incluindo topo/baixo/direita) cinzas
                             }
                             break;
                         case 'S': tile.classList.add('sofa'); tile.textContent = EMOJI_SOFA; break;
@@ -461,6 +462,11 @@
         function movePlayer(dx, dy) {
             if (focusValue <= 10) return; 
 
+            const now = performance.now();
+            if (now < lastMoveTime + MOVE_COOLDOWN) {
+                return; 
+            }
+            
             const newX = playerPos.x + dx;
             const newY = playerPos.y + dy;
             
@@ -471,18 +477,21 @@
             // 1. Bloqueios Fixos (Parede, Mesa, Porta)
             if (nextTile === '#' || nextTile === 'T' || nextTile === 'D') {
                 updateFocus(-10); 
+                lastMoveTime = now;
                 return; 
             }
             
             // 1b. Interação com Sofá (S) - Descanso (+5 Foco)
             if (nextTile === 'S') {
                 updateFocus(5); 
+                lastMoveTime = now;
                 return; 
             }
 
             // 1c. Interação com Cama (B) - Descanso (+15 Foco)
             if (nextTile === 'B') {
                 updateFocus(15); 
+                lastMoveTime = now;
                 return;
             }
             
@@ -507,10 +516,12 @@
                     placePlayer(); 
                     updateFocus(-1); 
                     updateAuraSignal();
+                    lastMoveTime = now;
                     return; 
                 } else {
                     updateFocus(-10); 
                     messageDisplay.textContent = "Porta trancada! Precisa da Chave (🔑).";
+                    lastMoveTime = now;
                     return;
                 }
             }
@@ -527,6 +538,7 @@
                 placePlayer(); 
                 updateAuraSignal();
                 messageDisplay.textContent = "Recuo! Perdeu 20 de Foco e foi empurrado(a) para trás.";
+                lastMoveTime = now;
                 return; 
             }
 
@@ -549,6 +561,7 @@
             placePlayer();
             updateFocus(-1); 
             updateAuraSignal();
+            lastMoveTime = now;
 
             // 5. Verificação de Condição de Vitória (A = Aura)
             if (nextTile === 'A') { gameOver(true); } 
@@ -640,7 +653,7 @@
                 }
 
                 movePlayer(dx, dy);
-                lastMoveTime = now;
+                // Note: lastMoveTime is updated inside movePlayer if movement occurs
             }
         }
         
@@ -699,7 +712,7 @@
 
                 if (moved) {
                     movePlayer(dx, dy);
-                    lastMoveTime = now;
+                    // Note: lastMoveTime is updated inside movePlayer if movement occurs
                 }
             } else if (!gamepad) {
                 // Tenta reconectar a um gamepad se o índice atual estiver desconectado
